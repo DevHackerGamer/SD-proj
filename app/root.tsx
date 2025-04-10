@@ -7,8 +7,9 @@ import {
   ScrollRestoration,
 } from "react-router";
 
-import type { Route } from "./+types/root";
+import type * as Route from "react-router";
 import "./app.css";
+import { ClerkProvider } from "@clerk/clerk-react";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,10 +43,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <ClerkProvider 
+    publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY} 
+    afterSignOutUrl="/">
+  <Outlet />
+  </ClerkProvider>
+  
+);
 }
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+export function ErrorBoundary({ error }: { error: unknown }) {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
