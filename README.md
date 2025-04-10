@@ -1,18 +1,16 @@
-# Welcome to React Router!
+# Welcome to the app!
 
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+(this document was auto generated with the React Router template, I only changed a few things to help you build without any hassle)
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+-  Server-side rendering
+-  Hot Module Replacement (HMR)
+-  Asset bundling and optimization
+-  Data loading and mutations
+-  TypeScript by default
+-  TailwindCSS for styling
+-  docs: (https://reactrouter.com/)
 
 ## Getting Started
 
@@ -32,7 +30,6 @@ Start the development server with HMR:
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
 
 ## Building for Production
 
@@ -40,6 +37,11 @@ Create a production build:
 
 ```bash
 npm run build
+```
+
+Run your production build:
+```bash
+npm start
 ```
 
 ## Deployment
