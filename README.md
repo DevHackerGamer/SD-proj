@@ -24,6 +24,12 @@ npm install
 
 ### Development
 
+Start the backend:
+
+```bash
+node (your_path_to_where_you_cloned_repo)/app/server/index.js
+```
+
 Start the development server with HMR:
 
 ```bash
