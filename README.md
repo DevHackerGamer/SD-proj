@@ -24,11 +24,7 @@ npm install
 
 ### Development
 
-Start the backend:
-
-```bash
-node (your_path_to_where_you_cloned_repo)/app/server/index.js
-```
+(No need to start up the server -- recommended way to test)
 
 Start the development server with HMR:
 
@@ -38,6 +34,12 @@ npm run dev
 
 
 ## Building for Production
+
+Start the backend server:
+
+```bash
+node (path_to_where_you_cloned_repo)/app/server/index.js
+```
 
 Create a production build:
 
