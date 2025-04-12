@@ -38,6 +38,7 @@ export default function AdminPage() {
     const handleUpload = async()=>{
       if(!file){
         setStatus("Please select a file to upload!");
+        window.alert("Please select a file to upload!")
         return;
       }
       const formData = new FormData();
