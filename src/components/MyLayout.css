@@ -1,0 +1,63 @@
+/* Ensure the layout container displays its children in a row */
+.layout-main {
+  display: flex;
+  flex-direction: row; /* explicitly arrange panes side by side */
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Common pane styles */
+.pane {
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Ensure that when both panes are visible, they share the available space equally */
+.layout-main > article {
+  flex: 1;
+}
+
+/* When a pane is maximized, it occupies the full width */
+.pane.maximized {
+  flex: 1;
+  width: 100%;
+}
+
+/* Styling for the header within each pane */
+.pane-header {
+  background-color: #f7f7f7;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Content section for each pane */
+.pane-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Styles for docked sections */
+.docked-header,
+.docked-footer {
+  background-color: #f7f7f7;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+}
+
+/* Docked header (for docked Pane B when minimized) */
+.docked-header {
+  border-bottom: 1px solid #ccc;
+}
+
+/* Docked footer (for docked Pane A when minimized) */
+.docked-footer {
+  border-top: 1px solid #ccc;
+}
