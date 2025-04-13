@@ -13,3 +13,23 @@ body {
     color-scheme: dark;
   }
 }
+
+/* Add to your app.css */
+@layer components {
+  .animate-fade-in-up {
+    @apply opacity-0;
+    animation: fade-in-up 0.6s ease-out forwards;
+  }
+  
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-[1.02];
+  }
+}
