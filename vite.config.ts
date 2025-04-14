@@ -12,6 +12,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    passWithNoTests: true,
     environment: "jsdom",
     coverage: {
       provider: "v8", 
