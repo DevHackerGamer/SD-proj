@@ -45,29 +45,22 @@ export default function AdminPage() {
       formData.append("file",file);
       setStatus("Uploading, please wait...");
       try{
-        const response = await fetch("http://localhost:5001/api/upload",{method:"POST",body:formData});
-        if(response.ok){
-          const data = await response.json();
-          setStatus(`File upload successful ${data.fileName}`);
-          const ext = path.extname(data.fileName).slice(1).toUpperCase();
-          window.alert(`${ext} ${data.fileName} was uploaded succefully`);
-          const fileResponse = await fetch("http://localhost:5000/api/process-file",{method:"POST",headers:{"Content-Type":"application/json",},body:JSON.stringify({filePath:data.filePath,}),});
-          if(fileResponse.ok){
-              const processedData = await fileResponse.json();
-              console.log(processedData.message);
-          }
-          else{
-            const processedData = await fileResponse.json();
-            console.log("Error processsing file",processedData.error);
-          }
+        const response = await fetch("http://localhost:5000/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+    
+        const data = await response.json();
+    
+        if (response.ok) {
+          const ext = data.fileName.split('.').pop()?.toUpperCase() || "";
+          window.alert(`${ext} file '${data.fileName}' uploaded and processed successfully.`);
+          setStatus(`Upload complete: ${data.fileName}`);
+        } else {
+          setStatus(`Upload failed: ${data.error}`);
         }
-        else{
-          const data = await response.json();
-          setStatus(`Error uploading file${data.error}`);
-        }
-      }
-      catch(error){
-        setStatus(`Upload failed: ${error}`);
+      } catch (error) {
+        setStatus(`Upload error: ${error}`);
       }
     }
     // Adding file end
@@ -107,6 +100,13 @@ export default function AdminPage() {
       {/* <label htmlFor="upload" style={{fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px blue, 0 0 10px blue, 0 0 20px blue'}}>Upload file below</label><br/> */}
       {/* <input onChange={handleFileChange} type="file" id="upload" name="upload" style={{fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px blue, 0 0 10px blue, 0 0 20px blue'}}/><br/> */}
       <button onClick={handleUpload} style={{ cursor:'pointer',fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px green, 0 0 10px green, 0 0 20px green'}}>Upload</button>
+      {status && 
+        (
+          <p style={{ marginTop: "10px", color: status.startsWith("✅") ? "green" : "red" }}>
+            {status}
+          </p>
+        )
+      }
     </main>
   );
 }

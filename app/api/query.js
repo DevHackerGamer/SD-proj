@@ -14,7 +14,7 @@ let collection = null;
 // Load and prepare the collection once on server startup
 async function initializeChromaCollection() {
     try {
-        const pdfPath = path.resolve('/home/lawrence140/SD/cc/SD-proj/South_Africa_2012-en.pdf');
+        const pdfPath = path.resolve('/home/lawrence140/SD/cc/SD-proj/app/server/uploads/South_Africa_2012-en.pdf');
         const rawText = await extractTextFromPDF(pdfPath);
         if (!rawText) {
             throw new Error("Failed to extract text from PDF.");
