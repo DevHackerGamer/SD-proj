@@ -45,12 +45,21 @@ export default function AdminPage() {
       formData.append("file",file);
       setStatus("Uploading, please wait...");
       try{
-        const response = await fetch("http://localhost:5000/api/upload",{method:"POST",body:formData});
+        const response = await fetch("http://localhost:5001/api/upload",{method:"POST",body:formData});
         if(response.ok){
           const data = await response.json();
           setStatus(`File upload successful ${data.fileName}`);
           const ext = path.extname(data.fileName).slice(1).toUpperCase();
           window.alert(`${ext} ${data.fileName} was uploaded succefully`);
+          const fileResponse = await fetch("http://localhost:5000/api/process-file",{method:"POST",headers:{"Content-Type":"application/json",},body:JSON.stringify({filePath:data.filePath,}),});
+          if(fileResponse.ok){
+              const processedData = await fileResponse.json();
+              console.log(processedData.message);
+          }
+          else{
+            const processedData = await fileResponse.json();
+            console.log("Error processsing file",processedData.error);
+          }
         }
         else{
           const data = await response.json();
@@ -97,7 +106,7 @@ export default function AdminPage() {
       </section>
       {/* <label htmlFor="upload" style={{fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px blue, 0 0 10px blue, 0 0 20px blue'}}>Upload file below</label><br/> */}
       {/* <input onChange={handleFileChange} type="file" id="upload" name="upload" style={{fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px blue, 0 0 10px blue, 0 0 20px blue'}}/><br/> */}
-      <button onClick={handleUpload} style={{fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px green, 0 0 10px green, 0 0 20px green'}}>Upload</button>
+      <button onClick={handleUpload} style={{ cursor:'pointer',fontSize:'16px',fontWeight:'bold',margin:'8px',display:'inline-block',textShadow:'0 0 5px green, 0 0 10px green, 0 0 20px green'}}>Upload</button>
     </main>
   );
 }

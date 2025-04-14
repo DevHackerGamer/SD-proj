@@ -7,6 +7,10 @@ export default function Home() {
     const { user } = useUser();
     const navigate = useNavigate();
 
+    const [searchResult, setSearchResult] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>("")
+    const [result, setResult] = useState("");    
+
     useEffect(() => {
         // Check if the user is signed in
         if (user) {
@@ -15,11 +19,27 @@ export default function Home() {
         }
     }, [user, navigate]); // Re-run when user changes
 
-    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const searchQuery = (e.target as HTMLFormElement).search.value;
-        console.log("Searching for:", searchQuery);
-        // Add logic to handle search functionality
+    const handleSearch = async(e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const searchQuery = (e.target as HTMLFormElement).search.value;
+    console.log("Searching for:", searchQuery);
+
+    try {
+        const res = await fetch("http://localhost:5000/api/query", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ query: searchQuery }),
+        });
+
+        const data = await res.json();
+        console.log("Response from server:", data);
+        setResult(data.answer || "No answer found.");
+    } catch (err) {
+        console.error("Error during fetch:", err);
+        setResult("An error occurred.");
+    }
     };
 
     return (
@@ -41,6 +61,7 @@ export default function Home() {
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
+                    flexDirection:"column",
                 }}
             >
                 <form onSubmit={handleSearch} style={{ display: "flex", gap: "0.5rem" }}>
@@ -48,6 +69,8 @@ export default function Home() {
                         type="text"
                         name="search"
                         placeholder="Search for something..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         style={{
                             padding: "0.5rem",
                             width: "300px",
@@ -69,6 +92,13 @@ export default function Home() {
                         Search
                     </button>
                 </form>
+                    {/* Display Search Result */}
+                    {result && (
+                        <section style={{ marginTop: "1rem", textAlign: "center" }}>
+                            <p><strong>Answer:</strong> {result}</p>
+                        </section>
+)}
+
             </section>
         </main>
     );
