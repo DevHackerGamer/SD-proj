@@ -14,7 +14,7 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     coverage: {
-      provider: "v8", // Native V8 coverage – no Istanbul needed
+      provider: "v8", 
       reporter: ["text", "json", "html"],
       exclude: [
         ...(configDefaults.coverage?.exclude || []),
