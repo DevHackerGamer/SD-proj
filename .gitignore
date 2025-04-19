@@ -1,0 +1,19 @@
+# macOS system files
+.DS_Store
+
+# Node modules
+/node_modules/
+
+# Build artifacts and router cache
+/build/
+/.react-router/
+
+# Environment variables
+.env
+.env.local
+
+# Visual Studio files
+.vs/
+
+# Docker image archives (add this line)
+*.tar
