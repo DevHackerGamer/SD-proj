@@ -1,0 +1,235 @@
+/* Basic Reset and Base Styles */
+body, .atom-archive-system {
+  background-color: #ffffff; /* White background */
+  color: #000000; /* Black text */
+  font-family: sans-serif; /* Basic font */
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure links and buttons are also visible */
+a, button, .delete-button /* Target delete buttons specifically */ {
+  color: #000000 !important; /* Black text for links/buttons, use !important if needed */
+  background-color: #f0f0f0; /* Light grey background for buttons */
+  border: 1px solid #ccc;
+  padding: 2px 6px;
+  cursor: pointer;
+  margin-left: 10px; /* Add some space for buttons */
+}
+
+button:hover, .delete-button:hover {
+    background-color: #e0e0e0; /* Darker grey on hover */
+}
+
+
+/* Style specific components if needed */
+.atom-header h1 {
+  color: #000000;
+}
+
+.atom-breadcrumb a, .atom-breadcrumb span {
+   color: #000000;
+}
+
+.atom-file-list-item, .atom-grid-view-item {
+  border: 1px solid #ccc; /* Light grey border for items */
+  background-color: #f9f9f9; /* Very light grey background for items */
+  color: #000000; /* Ensure item container text defaults to black */
+  padding: 8px 12px; /* Add padding */
+  margin-bottom: 5px; /* Add margin between items */
+  display: flex; /* Use flex for alignment */
+  align-items: center;
+}
+
+/* --- NEW/MODIFIED --- */
+/* Target text elements WITHIN list items */
+.atom-file-list-item span, 
+.atom-file-list-item .name, 
+.atom-file-list-item .size, 
+.atom-file-list-item .lastModified,
+.atom-grid-view-item span,
+.atom-grid-view-item .name {
+  color: #000000 !important; /* Force black text for name, size, etc. */
+  margin-right: 10px; /* Add spacing between elements */
+}
+
+.atom-file-list-item .icon {
+  margin-right: 10px;
+  width: 20px; 
+  height: 20px;
+  display: inline-block;
+  /* Add a simple visual indicator for icons */
+  border: 1px solid #555; 
+  text-align: center;
+  line-height: 18px; /* Center content vertically */
+}
+/* --- END NEW/MODIFIED --- */
+
+
+.atom-file-list-item:hover, .atom-grid-view-item:hover {
+  background-color: #eeeeee; /* Slightly darker grey on hover */
+}
+
+.loading, .empty-directory {
+  color: #555555; /* Grey text for status messages */
+  padding: 20px;
+  text-align: center;
+}
+
+.error-message {
+  color: #ff0000; /* Red text for errors */
+  background-color: #ffeeee; /* Light red background for errors */
+  border: 1px solid #ff0000;
+  padding: 10px;
+  margin: 10px;
+}
+
+.connection-status {
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.connection-status.connected {
+  background-color: #e0ffe0; /* Light green */
+  color: #006400; /* Dark green */
+  border: 1px solid #006400;
+}
+
+.connection-status.disconnected {
+  background-color: #ffe0e0; /* Light red */
+  color: #8b0000; /* Dark red */
+  border: 1px solid #8b0000;
+}
+
+/* Ensure simplified view has basic layout */
+.atom-archive-system.simplified {
+  padding: 15px;
+}
+
+.atom-main-container {
+  display: flex; /* Keep basic flex layout if needed */
+}
+
+.atom-content-area {
+  flex-grow: 1; /* Allow content area to take space */
+  padding: 10px;
+}
+
+.atom-results-container {
+  margin-top: 10px;
+  border: 1px solid #ddd; /* Add border to see container */
+  min-height: 200px; /* Give it some minimum height */
+}
+
+/* Add styles for FileList specifically if needed */
+.atom-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.atom-file-list-item .name {
+  flex-grow: 1; /* Allow name to take up remaining space */
+}
+
+/* --- File List Table Styling --- */
+.file-list-container {
+  width: 100%;
+  overflow-x: auto; /* Add horizontal scroll if needed */
+}
+
+.file-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* Helps control column widths more predictably */
+}
+
+.file-list-table th,
+.file-list-table td {
+  /* Keep existing padding for top/bottom, adjust left/right as needed */
+  padding: 8px 6px; /* Reduced default horizontal padding slightly */
+  border-bottom: 1px solid #e0e0e0; /* Light border between rows */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Hide overflow */
+  text-overflow: ellipsis; /* Show ellipsis (...) for overflow */
+  vertical-align: middle; /* Align content vertically */
+}
+
+.file-list-table thead th {
+  background-color: #f8f9fa; /* Light background for header */
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  border-bottom-width: 2px; /* Thicker border below header */
+  border-color: #dee2e6;
+}
+
+.file-list-table tbody tr:hover {
+  background-color: #f1f3f5; /* Subtle hover effect */
+}
+
+.file-list-table tbody tr.selected {
+  background-color: #e7f5ff; /* Highlight selected rows */
+}
+
+/* --- Column Specific Styling --- */
+
+/* Adjust width/min-width here to control column size */
+/* Use percentages, pixels, or 'auto' */
+
+.file-list-table .col-icon,
+.file-list-table th.col-icon, /* Target header specifically */
+.file-list-table td.col-icon { /* Target data cell specifically */
+  width: 40px; /* Fixed width for icon */
+  text-align: center;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.file-list-table .col-name,
+.file-list-table th.col-name,
+.file-list-table td.col-name {
+  width: auto; /* Allow name to take remaining space */
+  /* Or set a specific width/percentage: e.g., width: 60%; */
+  text-align: left; /* Default alignment for name */
+  padding-left: 12px; /* Ensure some padding for name */
+  padding-right: 12px;
+}
+
+.file-list-table .col-size,
+.file-list-table th.col-size, /* Target header specifically */
+.file-list-table td.col-size { /* Target data cell specifically */
+  width: 100px; /* Example fixed width */
+  /* Or use percentage: e.g., width: 15%; */
+  text-align: right; /* Ensure right alignment for both th and td */
+  /* --- Add specific padding for spacing --- */
+  padding-right: 20px; /* Increase right padding for space AFTER size */
+}
+
+.file-list-table .col-date,
+.file-list-table th.col-date, /* Target header specifically */
+.file-list-table td.col-date { /* Target data cell specifically */
+  width: 160px; /* Example fixed width */
+  /* Or use percentage: e.g., width: 20%; */
+  text-align: right; /* Ensure right alignment for both th and td */
+  /* --- Add specific padding for spacing --- */
+  padding-left: 20px; /* Increase left padding for space BEFORE date */
+  padding-right: 12px; /* Keep some padding at the end */
+}
+
+/* Optional: Add borders between columns if desired */
+/*
+.file-list-table th:not(:last-child),
+.file-list-table td:not(:last-child) {
+  border-right: 1px solid #e0e0e0;
+}
+*/
+
+/* Icon styling within cells */
+.file-list-table .col-icon svg {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}

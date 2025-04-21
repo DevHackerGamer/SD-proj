@@ -7,6 +7,7 @@ This project is a modern web application with a client and server structure. It 
 - React Router for navigation
 - Express.js backend
 - SQL Server integration
+- **Azure Blob Storage for file uploads**
 - Dockerized for easy deployment
 
 ## File Structure
@@ -51,6 +52,35 @@ This project is a modern web application with a client and server structure. It 
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js and npm
+- Docker (optional, for containerized deployment)
+- **Azure Account with Blob Storage:** You need an Azure Storage account and a container configured. Obtain the connection string.
+
+### Environment Variables
+
+Create a `.env` file in the project root and add the following variables:
+
+```dotenv
+# Server Configuration
+PORT=5000
+
+# Clerk Authentication (replace with your actual keys)
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SECRET=whsec_...
+
+# Azure Blob Storage Configuration (replace with your actual values)
+AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=your_storage_account_name;AccountKey=your_account_key;EndpointSuffix=core.windows.net"
+AZURE_STORAGE_CONTAINER_NAME="your_container_name" # e.g., uploads
+
+# Optional: CI/CD Trigger URL for Clerk Webhooks
+# CI_TRIGGER_URL=https://your-ci-cd-pipeline-trigger-url
+```
+
+**Important:** Add `.env` to your `.gitignore` file to avoid committing secrets.
+
 ### Installation
 
 Install dependencies:
@@ -89,3 +119,5 @@ Build and run the Docker container:
 docker build -t sd-proj .
 docker run -p 3000:3000 sd-proj
 ```
+
+**Note on Docker and Environment Variables:** When deploying with Docker, especially to services like Azure App Service, ensure the environment variables (like `AZURE_STORAGE_CONNECTION_STRING`, `CLERK_SECRET_KEY`, etc.) are configured in the App Service Application Settings. They will override any values baked into the image or `.env` file within the container.

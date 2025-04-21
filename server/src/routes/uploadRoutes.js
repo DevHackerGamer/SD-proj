@@ -1,54 +1,85 @@
 import express from "express";
 import multer from "multer";
-import cors from "cors";
+import { BlobServiceClient } from "@azure/storage-blob";
 import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-// Create uploads directory if it doesn't exist
+import dotenv from 'dotenv'; // Keep dotenv import if other routes might need it, but config is in server.js
+// --- Remove updateMetadataJson import ---
+// import { updateMetadataJson } from '../controllers/blobController.js'; // Assuming it's exported there, or keep helper here
+// --- End Remove ---
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const router = express.Router(); // Use express.Router
 
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir,{recursive:true});
-}
+// Use multer memory storage to get file buffer
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
-console.log(uploadDir);
-// Multer setup: store files in 'uploads/'(new dir) and keep original name
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage });
+// --- Helper function to safely parse JSON ---
+const safeJsonParse = (str) => {
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        return null;
+    }
+};
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+// --- Remove updateMetadataJson helper function if it was defined here ---
+// const updateMetadataJson = async (...) => { ... };
+// --- End Remove ---
 
-// Middleware
-app.use(cors());
-app.use("/uploads", express.static(uploadDir)); // serve uploaded files
 
-// Upload endpoint
-app.post("/api/upload", upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded." });
+// --- NEW ROUTE: List files in the container ---
+router.get("/files", async (req, res) => {
+  const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+  const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 'files'; // Ensure this matches your container
+
+  if (!connectionString) {
+    console.error("[List Files] Azure Storage Connection String is missing.");
+    return res.status(500).json({ error: "Server configuration error: Storage connection missing." });
   }
-  console.log("Uploaded file info: ",req.file);  
-  res.status(200).json({
-    message: "File uploaded successfully!",
-    fileName: req.file.filename,
-    filePath: `/uploads/${req.file.filename}`,
-  });
-});
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  try {
+    console.log(`[List Files] Attempting to list blobs in container: ${containerName}`);
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+
+    const blobs = [];
+    for await (const blob of containerClient.listBlobsFlat()) {
+      // Get necessary properties for each blob
+      const blockBlobClient = containerClient.getBlockBlobClient(blob.name);
+      blobs.push({
+        name: blob.name,
+        url: blockBlobClient.url, // Get the full URL
+        lastModified: blob.properties.lastModified,
+        contentType: blob.properties.contentType,
+        size: blob.properties.contentLength,
+      });
+    }
+    
+    console.log(`[List Files] Found ${blobs.length} blobs.`);
+    res.status(200).json(blobs);
+
+  } catch (error) {
+    console.error("[List Files] Error listing blobs:", error);
+    if (error.statusCode === 403) {
+         return res.status(500).json({ error: "Server error: Could not authenticate with storage service to list files." });
+    }
+     if (error.statusCode === 404) {
+         return res.status(500).json({ error: `Server configuration error: Storage container '${containerName}' not found.` });
+    }
+    res.status(500).json({ error: "Failed to list files.", details: error.message });
+  }
 });
+// --- END NEW ROUTE ---
+
+
+// --- Modified Upload endpoint ---
+// --- Pass req, res directly to the imported controller function ---
+import { uploadFile as uploadFileController } from '../controllers/blobController.js'; // Import controller
+
+router.post("/upload", upload.single("file"), uploadFileController);
+// --- End Modified ---
+
+
+// --- Keep the export ---
+export default router;
+// --- End Keep ---

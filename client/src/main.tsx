@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/index.css';
+// Import Syncfusion stylesheet
 // Import Clerk components for route protection
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'; 
 // Import useNavigate

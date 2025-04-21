@@ -15,12 +15,13 @@ export default defineConfig(({ mode }) => {
   console.log(`[vite.config.ts] Expecting .env files in: ${envDir}`);
 
   // Load env files based on mode (optional, Vite does this automatically, but good for debugging)
-  const env = loadEnv(mode, envDir, '');
+  const env = loadEnv(mode, path.resolve(__dirname), ''); // Load from project root
   console.log('[vite.config.ts] Loaded env keys:', Object.keys(env)); // See what keys were loaded
 
   return {
     root: path.resolve(__dirname, "client"), // Root directory is 'client'
-    envDir: envDir, // Explicitly set envDir (usually not needed, defaults to root)
+    envDir: path.resolve(__dirname), // Look for .env files in project root
+    envPrefix: 'VITE_', // Ensure only VITE_ prefixed vars are exposed client-side
     plugins: [
       tailwindcss(),
       react(),
@@ -34,21 +35,39 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 3000,
+      port: 3000, // Explicitly set the port. Change if 3000 is often busy.
+      strictPort: true, // Add this line - Vite will exit if the port is already in use
       host: true, // Listen on all addresses, including network IPs
       open: true, // Automatically open browser
       proxy: {
         "/api": {
-          target: "http://localhost:5000", // Backend server for API
+          // Use environment variable for backend target, default to 5000
+          target: process.env.VITE_API_URL || "http://localhost:5000", 
           changeOrigin: true,
           secure: false,
         },
       },
     },
-    define: {
-      // Only expose specific non-VITE prefixed variables if absolutely necessary
-      // 'process.env.NODE_ENV': JSON.stringify(mode), // Use mode directly
-      // 'process.env.API_URL': JSON.stringify(env.API_URL || 'http://localhost:5000'),
+    resolve: {
+      // Add this to help resolve Node.js built-in modules for Azure SDK
+      alias: {
+        crypto: 'crypto-browserify',
+        stream: 'stream-browserify',
+        path: 'path-browserify',
+        os: 'os-browserify/browser',
+        fs: 'browserify-fs',
+        '@': path.resolve(__dirname, './src'), // Ensure alias is correctly set if you use it
+      },
+    },
+    optimizeDeps: {
+      // Include Azure SDK dependencies for better optimization
+      include: ['@azure/storage-blob'],
+      esbuildOptions: {
+        // Node.js global to browser globalThis
+        define: {
+          global: 'globalThis',
+        },
+      },
     },
   };
 });

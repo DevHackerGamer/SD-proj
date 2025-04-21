@@ -4,11 +4,13 @@
     "client/src/**/*",
     "server/src/**/*",
     "shared/**/*",
-    "client/vite.config.ts"
+    "client/vite.config.ts",
+    "client/src/types/*.d.ts",
+    "client/CustomFileManager"
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["node", "vite/client"],
+    "types": ["node"],  // Removed vite/client as it's causing issues
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
@@ -23,6 +25,7 @@
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "typeRoots": ["node_modules/@types", "client/src/types"]
   }
 }

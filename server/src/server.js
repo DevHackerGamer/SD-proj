@@ -1,25 +1,28 @@
-import express from 'express';
-import path from 'path';
-import cors from 'cors';
 import dotenv from 'dotenv';
-// Re-import fileURLToPath and dirname to calculate relative paths
-import { fileURLToPath } from 'url';
-import { dirname } from 'path'; 
+import path from 'path'; // Import path
+import { fileURLToPath } from 'url'; // Import fileURLToPath
+
+// Calculate __dirname for ES modules early to find the project root
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Construct the path to .env.local in the project root (two levels up from server/src)
+const envPath = path.resolve(__dirname, '../../.env.local');
+
+// Load environment variables FIRST, specifying the path
+dotenv.config({ path: envPath }); 
+
+// Log to confirm if the variable is loaded *after* config
+console.log('[Server Start] AZURE_STORAGE_CONNECTION_STRING loaded:', !!process.env.AZURE_STORAGE_CONNECTION_STRING);
+
+import express from 'express';
+import cors from 'cors';
 import bodyParser from 'body-parser';
 
-// Import routes - uncomment these after verifying the files exist
+// Import routes AFTER dotenv.config()
 import clerkWebhookRoutes from './routes/clerkWebhookRoutes.js';
-// import uploadRoutes from './routes/uploadRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js'; 
+import blobRoutes from './routes/blobRoutes.js'; // Ensure this points to the correct file
 
-// Load environment variables
-dotenv.config();
-
-// Calculate __dirname for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename); 
-
-// No longer need hardcoded projectRoot
-// const projectRoot = '/app'; 
 const PORT = process.env.PORT || 5000;
 
 // Initialize Express app
@@ -31,8 +34,8 @@ app.use(cors({
   origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:4000'], 
   credentials: true
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' })); // Increase JSON limit for larger file operations
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' })); // Increase URL encoded limit
 
 // Serve static files from the React build
 // Calculate path relative to this file's directory (__dirname)
@@ -43,6 +46,8 @@ console.log(`Serving static files from: ${staticPath}`);
 
 // API Routes - fix the route paths to avoid using full URLs
 app.use('/api/webhooks', clerkWebhookRoutes); // Changed from '/api/webhooks/clerk'
+app.use('/api', uploadRoutes); // Use upload routes under /api prefix
+app.use('/api/blob', blobRoutes); // Ensure this uses the correctly imported variable
 
 // Catch-all route for React router
 app.get('*', (req, res) => {

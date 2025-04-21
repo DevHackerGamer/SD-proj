@@ -34,13 +34,7 @@ const HomePage = () => {
           fontSize: "1.25rem",
         }}
       >
-        <SignedOut>
-          {/* Removed invalid redirectUrl prop */}
-          <SignInButton mode="modal" />
-        </SignedOut>
-        <SignedIn>
-          <UserButton />
-        </SignedIn>
+    
       </header>
 
       {/* Centered Search Bar */}
