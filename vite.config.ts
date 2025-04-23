@@ -54,6 +54,10 @@ export default defineConfig(({ mode }) => {
       passWithNoTests: true,
       environment: "jsdom",
       coverage: {
+        lines: 50.4,
+        functions: 50.77,
+        branches: 53.1,
+        statements: 50,
         provider: "v8", 
         reporter: ["text", "json", "html"],
         exclude: [
