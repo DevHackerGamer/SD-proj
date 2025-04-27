@@ -3,7 +3,6 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
 
 const RootLayout = () => {
-  console.log('RootLayout rendering');
   const { isSignedIn } = useAuth();
   const location = useLocation();
 
@@ -21,49 +20,53 @@ const RootLayout = () => {
   }
 
   return (
-    <div className="root-layout flex flex-col min-h-screen bg-gray-900 text-gray-200">
-      <header className="main-header bg-gray-900 shadow-md border-b-2 border-gray-700">
-        <div className="container mx-auto px-4 py-3 flex items-center">
-          {/* Left side: site title */}
-          <Link to="/" className="site-title text-xl font-bold text-white hover:text-blue-400">
-            Archive
-          </Link>
+    <main className="flex flex-col min-h-screen bg-gray-900 text-gray-200 font-sans">
+      
+      {/* Header */}
+      <header className="bg-gray-900 shadow-md border-b-2 border-gray-700">
+        <section className="container mx-auto flex justify-between items-center px-4 py-3">
+          
+          {/* Left side - Archive Title */}
+          <h1 className="text-xl font-bold">
+            <Link to="/" className="text-white hover:text-blue-400">
+              Archive
+            </Link>
+          </h1>
 
-          {/* Center: nav links */}
-          <nav className="main-navigation flex items-center space-x-4 ml-6">
+          {/* Right side - goAdmin/goHome + Profile Icon */}
+          <nav className="flex items-center gap-6">
             <Link
               to={navLinkPath}
-              className="text-gray-300 hover:text-blue-400 min-w-16 text-center"
+              className="text-gray-300 hover:text-blue-400 text-center min-w-16"
             >
               {navLinkText}
             </Link>
-          </nav>
 
-          {/* Right side: auth buttons */}
-          <div className="ml-auto flex items-center space-x-2">
-            <SignedOut>
-              <SignInButton />
-            </SignedOut>
             <SignedIn>
               <UserButton />
             </SignedIn>
-          </div>
-        </div>
+            <SignedOut>
+              <SignInButton />
+            </SignedOut>
+          </nav>
+
+        </section>
       </header>
 
-      <main className="main-content flex-grow">
-        <div className="container mx-auto px-4 py-6">
-          <Outlet />
-        </div>
-      </main>
+      {/* Main Content */}
+      <section className="flex-grow container mx-auto px-4 py-6">
+        <Outlet />
+      </section>
 
-      <footer className="main-footer bg-gray-800 text-gray-300 mt-auto">
-        <div className="container mx-auto px-4 py-4 text-center">
+      {/* Footer */}
+      <footer className="bg-gray-800 text-gray-300 mt-auto">
+        <section className="container mx-auto px-4 py-4 text-center">
           <p>© {new Date().getFullYear()} Archive. All rights reserved.</p>
-        </div>
+        </section>
       </footer>
-    </div>
+    </main>
   );
 };
 
 export default RootLayout;
+
