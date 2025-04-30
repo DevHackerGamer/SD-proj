@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fileSystemService } from './FileSystemService';
+import { SearchBar } from '../SearvhBar/SearchBar';
 // Import SortKey and SortDirection from types.ts
 // --- Add FileMetadata type import ---
 import type { BlobItem, BlobItemProperties, SortKey, SortDirection, FileMetadata } from './types';
@@ -23,11 +24,21 @@ import 'react-toastify/dist/ReactToastify.css'; // Import toast styles
 // --- Import Parser ---
 import { parseBlobMetadataToFileMetadata } from './utils/metadataParser';
 // --- End Import ---
+import { FileSystemService } from './FileSystemService';
+import type { Node } from './types';
 
 const MENU_ID = "file-item-menu";
 
+interface File {
+  path: string;
+  type: 'file' | 'folder';
+  metadata: Record<string, string>;
+}
+
 // Ensure the component definition is correct
 const BasicFileSystem: React.FC = () => {
+  const [allNodes, setAllNodes] = useState<Node[]>([]);
+  const [query, setQuery] = useState<string>('');
   const [items, setItems] = useState<BlobItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null); // Keep for status bar if needed, but use toast for popups
@@ -816,6 +827,13 @@ const BasicFileSystem: React.FC = () => {
   }, [items, sortKey, sortDirection]);
   // --- END Memoize ---
 
+  const filteredItems = useMemo(() => {
+    if (!query) return sortedItems;
+    const lower = query.toLowerCase();
+    return sortedItems.filter(item =>
+    item.name.toLowerCase().includes(lower)
+    );
+    }, [sortedItems, query]);
 
   // --- NEW: Handler for single item download button ---
   const handleDownloadSingle = async (item: BlobItem) => {
@@ -851,6 +869,19 @@ const BasicFileSystem: React.FC = () => {
       }
     }
   };
+
+  useEffect(() => {
+    fileSystemService.listFiles().then(data => {
+      // if API returns flat paths, convert to tree here
+      setAllNodes(data as unknown as Node[]);
+    });
+  }, []);
+
+  // 2) Filter whenever allNodes or query changes
+  const filtered = useMemo(
+    () => fileSystemService.filterTree(allNodes, query),
+    [allNodes, query]
+  );
   // --- END NEW ---
 
   // --- Fix JSX Structure ---
@@ -897,13 +928,15 @@ const BasicFileSystem: React.FC = () => {
         currentPath={currentPath}
         onNavigateUp={navigateUp}
       />
-
+      
+      <SearchBar onSearch={setQuery} />
       <StatusDisplay isLoading={isLoading} error={error} />
 
       {!isLoading && !error && (
+        
          <FileListDisplay
             // --- Pass sorted items ---
-            items={sortedItems}
+            items={filteredItems}
             // --- Pass sort state and handler ---
             sortKey={sortKey}
             sortDirection={sortDirection}

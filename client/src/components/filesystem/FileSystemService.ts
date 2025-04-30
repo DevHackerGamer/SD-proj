@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 // Ensure FileMetadata is included in the import
 import type { BlobItem, FileMetadata, UploadOptions, BlobItemProperties } from './types'; // Add BlobItemProperties
+import type { Node } from './types'; 
 
 export class FileSystemService {
   // Using relative path assuming Vite proxy handles '/api'
@@ -19,6 +20,21 @@ export class FileSystemService {
       console.error(`[Service] Error listing files for path "${directory}":`, error.message);
       this.handleApiError(error, 'list files'); // Use helper for consistent error handling
     }
+  }
+
+  filterTree(nodes: Node[], q: string): Node[] {
+    if (!q) return nodes;
+    const lower = q.toLowerCase();
+    return nodes
+      .map(n => {
+        if (n.type === 'dir' && n.children) {
+          const c = this.filterTree(n.children, q);
+          if (c.length) return { ...n, children: c };
+        }
+        if (n.name.toLowerCase().includes(lower)) return { ...n }; 
+        return null;
+      })
+      .filter((x): x is Node => x !== null);
   }
 
   // --- Modified uploadFile to accept metadata and targetPath ---
@@ -291,6 +307,7 @@ export class FileSystemService {
        // Handle non-Error types (strings, numbers, etc.)
        message = `An unknown error occurred during ${operation}: ${String(error)}`;
     }
+    
 
     console.error(`[Service] Original error object for "${operation}":`, error);
     throw new Error(message); // Always throw a standard Error

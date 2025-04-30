@@ -66,3 +66,8 @@ export interface FileMetadata {
   // Add any other fields your modal uses, make them optional too
 }
 // --- END NEW ---
+export type Node = {
+  name: string;
+  type: 'file' | 'dir';
+  children?: Node[];
+};
