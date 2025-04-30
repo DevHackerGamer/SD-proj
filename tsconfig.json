@@ -7,7 +7,7 @@
     "client/vite.config.ts",
     "client/src/types/*.d.ts",
     "client/CustomFileManager"
-  ],
+, "client/tests/setup.ts"  ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node"],  // Removed vite/client as it's causing issues

@@ -72,4 +72,4 @@ const FileList: React.FC<FileListProps> = (/* { onItemDoubleClick, selectedPaths
   );
 };
 
-export default FileList;
+export default FileList;v
