@@ -1,0 +1,181 @@
+/* New dedicated styles for enhanced preview experience */
+.modalImageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation: fadeIn 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.previewControls {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  padding: 8px 15px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.modalImageContainer:hover .previewControls {
+  opacity: 1;
+}
+
+.previewControl {
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.previewControl:hover {
+  background-color: #e9ecef;
+  color: #0056b3;
+  transform: scale(1.25);
+}
+
+.actionButton, 
+.iconButton {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.actionButton:hover, 
+.iconButton:hover {
+  transform: scale(1.2);
+}
+
+.fileMetaInfo {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 250px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.4s cubic-bezier(0.215, 0.61, 0.355, 1), 
+              transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+  animation: slideUpFade 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.modalImageContainer:hover .fileMetaInfo {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Text preview enhancements with syntax highlighting theme */
+.codePreview {
+  width: 100%;
+  padding: 20px;
+  background-color: #f8f9fb;
+  border-radius: 6px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  line-height: 1.6;
+  color: #24292e;
+  overflow-x: auto;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.codePreview pre {
+  margin: 0;
+}
+
+.codePreview:hover {
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.08);
+  background-color: #f5f7fa;
+}
+
+/* File type badge */
+.fileTypeBadge {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background-color: #e9ecef;
+  color: #495057;
+  transition: all 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
+  animation: slideUpFade 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.modalImageContainer:hover .fileTypeBadge {
+  transform: translateY(2px);
+}
+
+/* File type specific colors */
+.fileTypeBadge.image {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.fileTypeBadge.pdf {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.fileTypeBadge.text {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.zoomIndicator {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+  animation: slideUpFade 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.modalImageContainer:hover .zoomIndicator {
+  opacity: 1;
+}
+
+/* Add keyframe animations for smoother effects */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUpFade {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

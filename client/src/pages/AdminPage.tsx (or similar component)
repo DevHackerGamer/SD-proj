@@ -1,0 +1,55 @@
+// ... existing imports and component setup ...
+
+const [selectedFile, setSelectedFile] = useState<YourFileType | null>(null);
+const [previewSasUrl, setPreviewSasUrl] = useState<string | null>(null);
+const [isMetadataModalOpen, setIsMetadataModalOpen] = useState(false);
+
+// Function to fetch SAS URL (you likely have this already)
+const fetchSasUrl = async (filePath: string) => {
+    console.log('[AdminPage] Fetching SAS URL for:', filePath);
+    try {
+        const url = await FileSystemService.getDownloadUrl(filePath);
+        console.log('[AdminPage] Fetched SAS URL:', url);
+        setPreviewSasUrl(url); // Update state
+    } catch (error) {
+        console.error('[AdminPage] Failed to fetch SAS URL:', error);
+        setPreviewSasUrl(null); // Clear URL on error
+    }
+};
+
+// Function called when metadata form is successfully saved
+const handleMetadataSaveSuccess = async (updatedMetadata: YourMetadataType) => {
+    console.log('[AdminPage] Metadata save successful.');
+    // Assuming selectedFile holds the info of the file being edited
+    if (selectedFile) {
+        // Option 1: Refresh the entire file list (simpler but less efficient)
+        // await refreshFileList(); // Call your function to reload file data
+
+        // Option 2: Directly refresh the SAS URL for the preview
+        console.log('[AdminPage] Re-fetching SAS URL after metadata update for:', selectedFile.path);
+        await fetchSasUrl(selectedFile.path); // Re-fetch the SAS URL
+
+        // Optionally update local state if needed, e.g., update selectedFile metadata
+        // setSelectedFile(prev => prev ? { ...prev, metadata: updatedMetadata } : null);
+    }
+    // Close modal, show success message, etc.
+    // setIsMetadataModalOpen(false);
+};
+
+// ... rest of the component, including rendering MetadataForm and FilePreviewModal ...
+
+// Inside the component where MetadataForm is used:
+// <MetadataForm
+//   file={selectedFile}
+//   onSaveSuccess={handleMetadataSaveSuccess} // Pass the handler
+//   // ... other props
+// />
+
+// Inside the component where FilePreviewModal is used:
+// <FilePreviewModal
+//   isOpen={/* some condition */}
+//   sasUrl={previewSasUrl} // Pass the state variable
+//   fileName={selectedFile?.name}
+//   // ... other props
+// />
+
