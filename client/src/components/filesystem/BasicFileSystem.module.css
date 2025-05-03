@@ -1,12 +1,10 @@
 /* Add styles for BasicFileSystem component here */
+/* Container takes full screen with absolute positioning */
 .container {
-  font-family: sans-serif;
-  padding: 20px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  max-width: 800px;
-  margin: 20px auto;
-  background-color: #f9f9f9;
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .container h2 {
@@ -49,11 +47,11 @@
   cursor: not-allowed;
 }
 
+/* Upload section with minimal height */
 .uploadSection {
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #eef;
-  border-radius: 4px;
+  margin-bottom: 10px;
+  padding: 10px;
+  flex-shrink: 0;
 }
 
 .uploadSection label {
@@ -65,10 +63,12 @@
   margin-right: 10px;
 }
 
+/* Status with minimal height */
 .loading,
 .error {
-  padding: 10px;
-  margin: 10px 0;
+  padding: 8px;
+  margin: 8px 0;
+  flex-shrink: 0;
   border-radius: 4px;
 }
 
@@ -84,10 +84,35 @@
   font-weight: bold;
 }
 
+/* File list container fills ALL remaining space */
+.fileListDisplay {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* File list takes full height of its container */
 .fileList {
-  list-style: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  margin: 0;
   padding: 0;
-  margin: 0; /* Remove default ul margin */
+  width: 100%;
+  flex: 1 1 auto; /* Allow the file list to grow and shrink */
+  min-height: 70vh; /* Ensure it takes a large portion of the viewport height */
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  max-width: 100%;
 }
 
 /* Base styles for both header and item rows */
@@ -106,10 +131,14 @@
   cursor: grab;
   display: flex; /* Ensure flex layout */
   align-items: center; /* Vertically align items in the row */
+  transform: translateZ(0); /* Enable hardware acceleration */
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .fileItem:active {
   cursor: grabbing; /* Indicate grabbing */
+  transform: translateY(1px);
+  transition: transform 0.1s ease;
 }
 
 /* Style for the item being dragged */
@@ -126,7 +155,10 @@
 }
 
 .fileItem:hover:not(.fileListHeader) { /* Don't highlight header on hover */
-  background-color: #f8f9fa;
+  background-color: #f1f5f9;
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  border-left-color: #0056b3;
 }
 
 /* Style for selected items */
@@ -181,6 +213,16 @@
   margin-right: 10px; /* Space between checkbox and icon */
   cursor: pointer;
   flex-shrink: 0; /* Prevent checkbox from shrinking */
+  width: 16px; /* Fixed width */
+  height: 16px; /* Fixed height */
+  position: relative; /* For better click target */
+  z-index: 2; /* Ensure it's above other elements */
+}
+
+/* Make sure checkbox is still visible even when item is not hovered */
+.fileItem .selectCheckbox {
+  opacity: 1; /* Always visible */
+  visibility: visible; /* Always visible */
 }
 
 .fileItem:last-child {
@@ -214,6 +256,12 @@
   margin-right: 8px; /* Space between icon and name */
   font-size: 1.1em; /* Slightly larger icon */
   flex-shrink: 0; /* Prevent icon from shrinking */
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.fileItem:hover .iconSpan {
+  transform: scale(1.2);
+  color: #0056b3;
 }
 
 .itemName {
@@ -259,10 +307,14 @@
   font-size: 0.8em;
   margin-left: 10px; /* Add space before button */
   flex-shrink: 0; /* Prevent button from shrinking */
+  transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .deleteButton:hover {
   background-color: #d32f2f;
+  transform: translateY(-1px);
 }
 
 .deleteButton:disabled {
@@ -270,19 +322,47 @@
   cursor: not-allowed;
 }
 
+.deleteButton:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+}
+
+.deleteButton:active:before {
+  width: 120px;
+  height: 120px;
+  opacity: 1;
+  transition: 0s;
+}
+
 /* Styles for Toolbar */
 .toolbar {
-  padding: 5px 10px;
-  margin-bottom: 10px;
+  padding: 5px 12px; /* Reduce padding */
+  margin-bottom: 10px; /* Reduce margin */
   background-color: #e9ecef; /* Light background */
   border: 1px solid #dee2e6;
   border-radius: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 10px; /* Adjust padding if needed */
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
-  gap: 10px; /* Gap between sections */
+  padding: 8px 12px; /* Slightly more padding for better spacing */
+  overflow: visible; /* Allow dropdowns to extend beyond toolbar */
+  flex-wrap: nowrap; /* Prevent wrapping to keep toolbar stable */
+  gap: 8px; /* Reduced gap between sections */
+  min-height: 42px; /* Set minimum height to prevent jumping */
+  position: relative; /* For absolute positioning if needed */
+  background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  flex-shrink: 0;
 }
 
 /* NEW: Sections within toolbar */
@@ -294,17 +374,145 @@
   gap: 5px; /* Reduce gap slightly for icons */
 }
 
+.toolbarSectionLeft {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* Reduced gap slightly for icons */
+  flex-shrink: 0; /* Prevent shrinking */
+  width: 90px; /* Increased fixed width for left section */
+  justify-content: flex-start;
+}
+
 .toolbarSectionMiddle {
   flex-grow: 1; /* Allow middle section to take space */
   justify-content: flex-start; /* Align content to the start */
-  padding-left: 15px; /* Add some space from left section */
-  min-width: 150px; /* Prevent it getting too small */
+  padding-left: 8px; /* Reduced space from left section */
+  min-width: 200px; /* Minimum width */
+  max-width: 55%; /* Maximum percentage of toolbar */
+  display: flex;
+  overflow: hidden; /* Hide overflow */
+  flex: 0 1 auto; /* Don't expand beyond needed width but allow shrinking if needed */
+  min-width: 200px; /* Ensure minimum width */
+  max-width: calc(100% - 400px); /* Limit maximum width */
+  padding-right: 8px;
+  position: relative; /* For absolute positioning of dropdown */
+  margin: 0 10px; /* Add margin for spacing */
+  overflow: visible; /* Allow dropdown to show */
 }
 
+.toolbarSectionRight {
+  display: flex;
+  align-items: center;
+  gap: 3px; /* Reduced gap slightly for icons */
+  flex-shrink: 0; /* Prevent shrinking */
+  justify-content: flex-end; /* Ensure right alignment */
+  min-width: 150px; /* Ensure minimum space for buttons */
+  width: 320px; /* Increased fixed width for right section */
+  min-width: 300px;
+}
+
+/* Enhanced Breadcrumb navigation styles with better interactive cues */
+.breadcrumbContainer {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap; /* Prevent wrapping for stable layout */
+  overflow: hidden;
+  max-width: 100%;
+  padding: 4px 8px;
+  gap: 2px; /* Reduced gap between items */
+  background-color: #f8f9fa; /* Light background to distinguish the breadcrumb area */
+  border-radius: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
+  white-space: nowrap; /* Keep all items on one line */
+  height: 32px;
+  max-height: 32px;
+  border: 1px solid #e2e6ea; /* Subtle border */
+  position: relative; /* For dropdown positioning */
+  transition: max-height 0.3s ease;
+}
+
+/* Make breadcrumb items cleaner */
+.breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px; /* Reduced padding */
+  border-radius: 4px;
+  font-size: 0.85rem; /* Slightly smaller font */
+  color: #0056b3; /* Blue color to indicate clickable */
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none; /* Prevent text selection */
+  border: 1px solid transparent; /* For hover effect */
+  flex-shrink: 0; /* Prevent shrinking */
+  background-color: transparent;
+  max-width: 150px; /* Maximum width for each segment */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis for long names */
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.breadcrumbItem svg {
+  margin-right: 3px; /* Reduced space between icon and text */
+  font-size: 0.85em; /* Smaller icon */
+}
+
+.breadcrumbItem:hover {
+  background-color: #e9ecef;
+  color: #003d7a; /* Darker blue on hover */
+  text-decoration: underline;
+  border-color: #ced4da; /* Border appears on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
+}
+
+.breadcrumbItem:active {
+  background-color: #dee2e6;
+  transform: translateY(0); /* Reset transform when clicked */
+  box-shadow: none; /* Remove shadow when clicked */
+}
+
+.breadcrumbSeparator {
+  margin: 0;
+  color: #adb5bd;
+  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevent shrinking */
+  padding: 0 1px; /* Minimal padding */
+}
+
+/* Add a style for the breadcrumb container when it gets too long */
+.breadcrumbContainer:hover {
+  overflow: hidden; /* Keep overflow hidden but show dropdown instead */
+}
+
+/* Add styles to make breadcrumbs more compact when space is tight */
+@media (max-width: 768px) {
+  .breadcrumbItem {
+    padding: 2px 4px;
+    font-size: 0.85rem;
+  }
+  
+  .breadcrumbItem svg {
+    margin-right: 2px;
+  }
+  
+  .breadcrumbSeparator {
+    font-size: 0.65rem;
+  }
+}
+
+/* Style for selection count to prevent layout shifts */
 .selectionCount {
-    font-size: 0.9em;
-    color: #495057;
-    margin-right: 10px; /* Space after count */
+  font-size: 0.9em;
+  color: #495057;
+  margin-right: 10px;
+  width: auto;
+  min-width: 100px; /* Ensure minimum width even when empty */
+  text-align: right;
+  white-space: nowrap;
 }
 
 .toolbar span {
@@ -333,6 +541,63 @@
   border-color: #adb5bd;
 }
 
+/* Ensure toolbar buttons have consistent size */
+.toolbarIconButton {
+  background: none;
+  border: none;
+  padding: 6px; /* Adjust padding */
+  margin: 0 2px; /* Adjust margin */
+  cursor: pointer;
+  font-size: 1.2em; /* Adjust icon size */
+  color: #555; /* Default icon color */
+  border-radius: 4px; /* Rounded corners */
+  display: inline-flex; /* Align icon nicely */
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  width: 30px; /* Fixed width */
+  height: 30px; /* Fixed height */
+  padding: 0; /* Remove padding to use fixed dimensions */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbarIconButton:hover:not(:disabled) {
+  background-color: #e9ecef; /* Light background on hover */
+  color: #000; /* Darker icon color on hover */
+  transform: translateY(-1px);
+}
+
+.toolbarIconButton:disabled {
+  color: #bbb; /* Lighter color when disabled */
+  cursor: not-allowed;
+  background-color: transparent; /* Ensure no background when disabled */
+}
+
+.toolbarIconButton:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+}
+
+.toolbarIconButton:active:before {
+  width: 120px;
+  height: 120px;
+  opacity: 1;
+  transition: 0s;
+}
+
 /* Styles for FilePreviewModal */
 .modalOverlay {
   position: fixed; /* Sit on top of the page content */
@@ -345,6 +610,8 @@
   justify-content: center;
   align-items: center;
   z-index: 1000; /* Make sure it's above other items */
+  transition: background-color 0.3s ease;
+  animation: fadeIn 0.25s ease forwards;
 }
 
 .modalContent {
@@ -358,6 +625,8 @@
   max-height: 80vh; /* Max height */
   overflow-y: auto; /* Allow scrolling if content is tall */
   position: relative; /* Needed for positioning the close button */
+  animation: slideIn 0.3s ease forwards;
+  transform-origin: center;
 }
 
 .modalContent h3 {
@@ -395,6 +664,10 @@
   justify-content: center;
   align-items: center;
   overflow: auto; /* Allow scrolling for large text files */
+  border-radius: 8px;
+  background-color: #fcfcfc;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }
 
 .modalPreviewArea p {
@@ -408,6 +681,13 @@
   max-height: 100%; /* Allow image to fill the preview area height */
   object-fit: contain; /* Scale image while preserving aspect ratio */
   display: block; /* Remove extra space below image */
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.previewImage:hover {
+  transform: scale(1.02);
 }
 
 /* Style for preview PDF iframe */
@@ -416,6 +696,8 @@
   height: 100%; /* Make iframe fill the preview area */
   min-height: 50vh; /* Ensure PDF viewer has enough space */
   display: block; /* Remove extra space below iframe */
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Style for text preview */
@@ -429,6 +711,13 @@
   margin: 0; /* Remove default margin */
   max-height: 55vh; /* Limit height within the preview area */
   overflow: auto; /* Ensure scrolling within the pre tag if needed */
+  border-radius: 4px;
+  padding: 15px 20px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  line-height: 1.6;
+  border: 1px solid #eee;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-color: #fafafa;
 }
 
 .modalActions {
@@ -465,10 +754,29 @@
   text-decoration: none; /* Remove underline from link */
   font-size: 0.9rem;
   display: inline-block; /* Correct display for link styled as button */
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .modalDownloadButton:hover {
-  background-color: #0056b3; /* Darker blue on hover */
+  background-color: #0069d9;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.modalDownloadButton:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s ease;
+}
+
+.modalDownloadButton:hover:after {
+  left: 100%;
 }
 
 .modalDownloadButton:disabled {
@@ -739,10 +1047,39 @@
   line-height: 1;
   display: inline-flex; /* Align icon */
   align-items: center;
+  transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .actionButton:hover {
   color: #000;
+  transform: translateY(-1px);
+}
+
+.actionButton:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+}
+
+.actionButton:active:before {
+  width: 120px;
+  height: 120px;
+  opacity: 1;
+  transition: 0s;
+}
+
+.actionButton:active {
+  transform: translateY(1px);
 }
 
 /* Actions Column */
@@ -827,13 +1164,16 @@
   display: inline-flex; /* Align icon nicely */
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease-out, color 0.2s ease-out;
+  transition: transform 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .iconButton:hover:not(:disabled),
 .toolbarIconButton:hover:not(:disabled) {
   background-color: #e9ecef; /* Light background on hover */
   color: #000; /* Darker icon color on hover */
+  transform: translateY(-1px);
 }
 
 .iconButton:disabled,
@@ -841,6 +1181,27 @@
   color: #bbb; /* Lighter color when disabled */
   cursor: not-allowed;
   background-color: transparent; /* Ensure no background when disabled */
+}
+
+.iconButton:before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+}
+
+.iconButton:active:before {
+  width: 120px;
+  height: 120px;
+  opacity: 1;
+  transition: 0s;
 }
 
 /* Specific Button Styles */
@@ -904,7 +1265,7 @@
   /* color: #0056b3; */ /* Change text color */
   /* font-weight: bold; */
 }
-/* --- END NEW --- */
+ /* --- END NEW --- */
 
 /* --- END NEW --- */
 
@@ -1046,5 +1407,761 @@
     font-weight: bold;
 }
 
+/* Style for the edit metadata button */
+.editButton {
+  color: #0095ff; /* Nice blue color for edit */
+}
+
+.editButton:hover:not(:disabled) {
+  background-color: #e6f4ff; /* Light blue background on hover */
+  color: #0070c9; /* Darker blue on hover */
+}
+
+/* Add a new collapsed segment indicator for deep paths */
+.collapsedSegment {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 4px;
+  color: #6c757d;
+  cursor: pointer;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  margin: 0 1px;
+  font-size: 0.8rem;
+  border: 1px solid #dee2e6;
+}
+
+.collapsedSegment:hover {
+  background-color: #dee2e6;
+  color: #495057;
+}
+
+/* Add a dropdown for hidden path segments */
+.breadcrumbDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  width: max-content;
+  max-width: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+  padding: 4px 0;
+  display: none; /* Hidden by default */
+}
+
+.breadcrumbContainer:hover .breadcrumbDropdown.hasHiddenSegments {
+  display: block; /* Show dropdown on hover when there are hidden segments */
+}
+
+.breadcrumbDropdownItem {
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #495057;
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbDropdownItem:hover {
+  background-color: #f8f9fa;
+}
+
+.breadcrumbDropdownItem.active {
+  font-weight: bold;
+  background-color: #e9ecef;
+}
+
+/* Remove scrolling on hover - replaced with dropdown */
+.breadcrumbContainer:hover {
+  overflow: hidden; /* Keep overflow hidden but show dropdown instead */
+}
+
+/* Style for the active/current directory breadcrumb */
+.activeBreadcrumb {
+  background-color: #e9ecef;
+  font-weight: 600;
+  border-color: #dee2e6;
+  border-radius: 3px;
+  color: #0056b3; /* Keep it blue but bold for visibility */
+  pointer-events: none; /* Disable clicks on current directory */
+}
+
+/* Enhanced Breadcrumb container with better styling for collapse/expand */
+.breadcrumbContainer {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  padding: 4px 8px;
+  gap: 2px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e2e6ea;
+  min-height: 32px;
+  position: relative; /* For dropdown positioning */
+  transition: max-height 0.3s ease;
+}
+
+/* Style for the ellipsis button */
+.collapsedSegment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 5px;
+  color: #0056b3;
+  cursor: pointer;
+  background-color: #e9ecef;
+  border-radius: 3px;
+  margin: 0 1px;
+  font-size: 0.8rem;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.collapsedSegment:hover {
+  background-color: #dee2e6;
+  color: #0056b3;
+  border-color: #adb5bd;
+}
+
+.collapsedSegment:active {
+  background-color: #ced4da;
+  transform: translateY(1px);
+}
+
+/* Style for the collapse button */
+.collapseButton {
+  color: #dc3545;
+  margin-left: 4px;
+}
+
+.collapseButton:hover {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Dropdown for breadcrumb paths */
+.breadcrumbDropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 10px;
+  z-index: 1001;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  width: max-content;
+  max-width: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.breadcrumbDropdownItem {
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #0056b3;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.15s ease;
+}
+
+.breadcrumbDropdownItem:hover {
+  background-color: #f1f8ff;
+  color: #0056b3;
+}
+
+.breadcrumbDropdownItem.active {
+  font-weight: bold;
+  background-color: #e9ecef;
+  color: #212529;
+}
+
+/* Enhanced Breadcrumb container with better scrolling support */
+.breadcrumbContainer {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Hide vertical scrollbar */
+  max-width: 100%;
+  padding: 4px 8px;
+  gap: 2px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e2e6ea;
+  min-height: 32px;
+  position: relative; /* For dropdown positioning */
+  transition: all 0.3s ease;
+  scroll-behavior: smooth; /* Smooth scrolling */
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide webkit scrollbar */
+.breadcrumbContainer::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Breadcrumb items container */
+.breadcrumbItems {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  margin: 0 15px; /* Add margin to avoid overlap with potential scroll triggers */
+}
+
+/* Remove visible scroll triggers - we'll use invisible ones that still work */
+.scrollTriggerLeft,
+.scrollTriggerRight {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 25px; /* Wider touch area */
+  z-index: 2;
+  opacity: 0; /* Completely invisible */
+  cursor: pointer;
+}
+
+.scrollTriggerLeft {
+  left: 0;
+}
+
+.scrollTriggerRight {
+  right: 0;
+}
+
+/* Enhanced scroll triggers */
+.scrollTriggerLeft,
+.scrollTriggerRight {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right, rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+  cursor: pointer;
+  color: #0056b3;
+}
+
+.scrollTriggerLeft {
+  left: 0;
+  background: linear-gradient(to right, rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0));
+}
+
+.scrollTriggerRight {
+  right: 0;
+  background: linear-gradient(to left, rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0));
+}
+
+/* Show scroll triggers when container has overflow or is being hovered */
+.breadcrumbContainer.hasOverflow .scrollTriggerLeft,
+.breadcrumbContainer.hasOverflow .scrollTriggerRight,
+.breadcrumbContainer:hover .scrollTriggerLeft,
+.breadcrumbContainer:hover .scrollTriggerRight {
+  opacity: 1;
+}
+
+/* Special handling for expanded mode */
+.breadcrumbContainer.expanded {
+  max-height: none;
+  overflow-x: auto;
+  padding-left: 20px; /* Make room for left scroll trigger */
+  padding-right: 20px; /* Make room for right scroll trigger */
+}
+
+/* Enhanced Breadcrumb container with better scrolling support */
+.breadcrumbContainer {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  overflow-y: hidden; /* Hide vertical scrollbar */
+  max-width: 100%;
+  padding: 4px 8px;
+  gap: 2px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e2e6ea;
+  min-height: 32px;
+  position: relative; /* For dropdown positioning */
+  transition: all 0.3s ease;
+  scroll-behavior: smooth; /* Smooth scrolling */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #ced4da transparent; /* Firefox */
+  /* Webkit scrollbar styles */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #ced4da;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  /* Hide scrollbar but keep functionality */
+  &::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+}
+
+/* Show scrollbar on hover for better UX */
+.breadcrumbContainer:hover {
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+}
+
+/* Enhanced scroll triggers */
+.scrollTriggerLeft,
+.scrollTriggerRight {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right, rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+  cursor: pointer;
+  color: #0056b3;
+}
+
+.scrollTriggerLeft {
+  left: 0;
+  background: linear-gradient(to right, rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0));
+}
+
+.scrollTriggerRight {
+  right: 0;
+  background: linear-gradient(to left, rgba(248, 249, 250, 0.95), rgba(248, 249, 250, 0));
+}
+
+/* Show scroll triggers when container has overflow or is being hovered */
+.breadcrumbContainer.hasOverflow .scrollTriggerLeft,
+.breadcrumbContainer.hasOverflow .scrollTriggerRight,
+.breadcrumbContainer:hover .scrollTriggerLeft,
+.breadcrumbContainer:hover .scrollTriggerRight {
+  opacity: 1;
+}
+
+/* Special handling for expanded mode */
+.breadcrumbContainer.expanded {
+  max-height: none;
+  overflow-x: auto;
+  padding-left: 20px; /* Make room for left scroll trigger */
+  padding-right: 20px; /* Make room for right scroll trigger */
+}
+
+/* Improved Folder Modal Styles */
+.folderModal {
+  max-width: 450px;
+  padding: 25px;
+}
+
+.folderNameInput {
+  font-size: 1.1em;
+  padding: 10px 12px;
+  width: 100%;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
+}
+
+.folderNameInput:focus {
+  border-color: #80bdff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.folderPathPreview {
+  font-size: 0.9em;
+  color: #6c757d;
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e9ecef;
+}
+
+.folderPathPreview span {
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Fix breadcrumb container - ensure all items are clickable */
+.breadcrumbContainer {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden; 
+  max-width: 100%;
+  padding: 4px 8px;
+  gap: 2px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e2e6ea;
+  min-height: 32px;
+  position: relative;
+  transition: all 0.3s ease;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none; 
+  z-index: 10; /* Ensure container is above other elements */
+}
+
+/* Breadcrumb items container - make sure buttons receive clicks */
+.breadcrumbItems {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  margin: 0 15px;
+  width: fit-content; /* Allow container to expand as needed */
+  pointer-events: auto; /* Ensure it receives pointer events */
+}
+
+/* Fix breadcrumb buttons to ensure they're always clickable */
+.breadcrumbItem {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #0056b3;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  background-color: transparent;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative; /* Add positioning context */
+  z-index: 15; /* Ensure buttons are above other elements */
+  pointer-events: auto !important; /* Force pointer events */
+}
+
+/* Make active breadcrumb visually distinct but still clickable */
+.activeBreadcrumb {
+  background-color: #e9ecef;
+  font-weight: 600;
+  border-color: #dee2e6;
+  border-radius: 3px;
+  color: #0056b3;
+  /* Remove pointer-events: none to keep it clickable */
+  opacity: 0.8; /* Slightly dimmed instead of completely disabled */
+}
+
+/* Special handling for expanded mode */
+.breadcrumbContainer.expanded {
+  max-height: none;
+  overflow-x: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+  z-index: 20; /* Higher z-index when expanded */
+}
+
+/* Improved Delete Confirmation Modal */
+.deleteModal {
+  max-width: 450px;
+  padding: 25px;
+}
+
+.deleteModal h3 {
+  color: #dc3545;
+  margin-top: 0;
+  margin-bottom: 20px;
+  animation: pulseWarn 1.5s ease infinite alternate;
+}
+
+@keyframes pulseWarn {
+  from { color: #dc3545; }
+  to { color: #bd2130; }
+}
+
+.deleteConfirmContent {
+  margin-bottom: 25px;
+  color: #333;
+}
+
+.deleteItemsList {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 10px;
+  margin: 15px 0;
+  background-color: #f8f9fa;
+}
+
+.deleteItemInfo {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 0.9em;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.deleteItemInfo svg {
+  margin-right: 8px;
+  color: #6c757d;
+}
+
+.deleteItemInfo:hover {
+  background-color: #f8f9fa;
+  transform: translateX(5px);
+}
+
+.deleteWarning {
+  color: #dc3545;
+  font-weight: 500;
+  margin-top: 15px;
+  padding: 8px 10px;
+  background-color: #f8d7da;
+  border-radius: 4px;
+  border-left: 4px solid #dc3545;
+}
+
+.deleteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.deleteCancelButton {
+  padding: 8px 16px;
+  background-color: #e9ecef;
+  color: #495057;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteCancelButton:hover {
+  background-color: #dee2e6;
+}
+
+.deleteConfirmButton {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.deleteConfirmButton:hover {
+  background-color: #c82333;
+}
+
+/* Highlight animation for newly uploaded or changed items */
+@keyframes highlight {
+  0% { background-color: rgba(0, 123, 255, 0.2); }
+  50% { background-color: rgba(0, 123, 255, 0.1); }
+  100% { background-color: transparent; }
+}
+
+.fileItem.highlighted {
+  animation: highlight 2s ease;
+}
+
+/* Main content styles to accommodate the left sidebar and use full vertical space */
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  padding: 20px 30px;
+  min-width: 0; /* Allow the main content to shrink if needed */
+}
 
 /* ... rest of your styles ... */
+
+/* Update container and main content styles to accommodate larger sidebar */
+.container {
+  position: relative;
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  width: 100%;
+  overflow: hidden; /* Prevent scrolling at container level */
+  background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
+  max-width: none; /* Remove max-width constraint */
+  border: none;
+}
+
+/* Responsive adjustment for smaller screens */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    width: 100%;
+    padding: 15px;
+  }
+}
+
+/* Ensure file list display is full width */
+.fileListDisplay {
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Make it grow to fill space */
+  min-height: 0; /* Allow it to shrink below its content size */
+  overflow: hidden; /* Hide overflow */
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Filter banner styles */
+.filterBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #f6f8fe, #e6f0ff);
+  border: 1px solid #c9d8f5;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filterStats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.filterIcon {
+  color: #3182ce;
+  font-size: 16px;
+}
+
+/* Fix badge styling */
+.badge {
+  background-color: #3182ce;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-block;
+  margin: 0 3px;
+}
+
+.clearFiltersButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #fff;
+  border: 1px solid #e53e3e;
+  color: #e53e3e;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clearFiltersButton:hover {
+  background-color: #fff5f5;
+}
+
+.clearIcon {
+  font-size: 12px;
+}
+
+/* Filtered item highlights */
+.filteredItem {
+  position: relative;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.3);
+  background-color: rgba(235, 245, 255, 0.7);
+  transition: all 0.2s ease-in-out;
+}
+
+.filteredItem:hover {
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.6);
+  background-color: rgba(235, 245, 255, 0.9);
+}
+
+/* Animation for filtered items */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.6); }
+  70% { box-shadow: 0 0 0 4px rgba(66, 153, 225, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(66, 153, 225, 0); }
+}
+
+.newlyFiltered {
+  animation: pulse 1.5s ease-in-out;
+}
+
+.highlighted {
+  background-color: rgba(255, 251, 214, 0.8) !important;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.6) !important;
+  animation: pulse 1.5s ease-in-out;
+}
+
+/* Fix empty rulesets by adding properties */
+.badge {
+  background-color: #3182ce;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.filterSidebar {
+  width: 250px; /* Fixed width */
+  min-width: 250px; /* Prevent shrinking */
+  max-width: 250px; /* Prevent expanding */
+  height: 100%;
+  overflow-y: auto; /* Add scrolling for content */
+  overflow-x: hidden; /* Prevent horizontal overflow */
+  background-color: #f5f5f5;
+  border-right: 1px solid #ddd;
+  padding: 15px;
+  box-sizing: border-box;
+}

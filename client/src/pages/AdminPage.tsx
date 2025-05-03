@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   SignedIn,
   SignedOut,
@@ -13,6 +13,11 @@ import { useDropzone } from 'react-dropzone';
 // @ts-ignore
 import path from 'path-browserify';
 import BasicFileSystem from '../components/filesystem/BasicFileSystem';
+import type { FileSystemRefType } from '../components/filesystem/BasicFileSystem';
+// Add new imports for the metadata flow
+import { fileSystemService } from '../components/filesystem/FileSystemService';
+import MetadataModal from '../components/filesystem/components/MetadataModal';
+import type { FileMetadata } from '../components/filesystem/types';
 
 // Define type for file information
 type FileInfo = {
@@ -35,6 +40,13 @@ const AdminPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'files' | 'fileManager'>('upload');
+  // Add new state for metadata handling
+  const [isMetadataModalOpen, setIsMetadataModalOpen] = useState<boolean>(false);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  // Add state to track where to navigate after upload
+  const [uploadResultPath, setUploadResultPath] = useState<string | null>(null);
+  const fileSystemRef = useRef<FileSystemRefType>(null);
 
   useEffect(() => {
     if (!isSignedIn || !sessionId) {
@@ -42,9 +54,12 @@ const AdminPage = () => {
     }
   }, [isSignedIn, sessionId, navigate]);
 
+  // Modify onDrop to open the metadata modal
   const onDrop = (acceptedFiles: File[]) => {
     if (Array.isArray(acceptedFiles) && acceptedFiles.length > 0) {
       setFile(acceptedFiles[0]);
+      setFileToUpload(acceptedFiles[0]); // Set file for metadata modal
+      setIsMetadataModalOpen(true); // Open metadata modal
       setStatus('');
     } else {
       setStatus('Invalid file selection. Please try again.');
@@ -108,50 +123,64 @@ const AdminPage = () => {
     }
   }, [showFileList, isSignedIn]);
 
-  const handleUpload = async () => {
+  // Add a metadata save handler that uses the fileSystemService
+  const handleSaveMetadata = async (metadata: FileMetadata, targetPath: string, isEditing: boolean, file?: File | null) => {
+    if (!file) {
+      setStatus('File is required for upload.');
+      return;
+    }
+    
+    setIsUploading(true);
+    setStatus('Uploading with metadata, please wait...');
+    
+    try {
+      console.log(`Calling uploadFile for: ${file.name} to ${targetPath}`);
+      const uploadResult = await fileSystemService.uploadFile(file, metadata, targetPath);
+      
+      if (!uploadResult || typeof uploadResult.filePath !== 'string') {
+        throw new Error('Upload completed, but received an invalid response from the server.');
+      }
+      
+      // Extract the directory path to navigate to it
+      const directoryPath = path.dirname(uploadResult.filePath);
+      console.log(`Upload successful. Will navigate to directory: ${directoryPath}`);
+      
+      // Close metadata modal and clear file states
+      setIsMetadataModalOpen(false);
+      setFileToUpload(null);
+      setFile(null); // Clear the file in the Quick Upload tab
+      
+      // Set temporary success status message
+      setStatus(`File upload successful: ${file.name}. Path: ${uploadResult.filePath}`);
+      
+      // Switch to file manager tab and pass the directory path for navigation
+      setUploadResultPath(directoryPath);
+      setActiveTab('fileManager');
+      
+      // Clear status message after a delay
+      setTimeout(() => {
+        setStatus('');
+      }, 3000);
+      
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      const message = err instanceof Error ? err.message : String(err);
+      setStatus(`Upload failed: ${message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Modify handleUpload to open the metadata modal
+  const handleUpload = () => {
     if (!file) {
       setStatus('Please select a file to upload!');
       return;
     }
-    const formData = new FormData();
-    formData.append('file', file);
-    setStatus('Uploading, please wait...');
-
-    try {
-      // Ensure this URL is exactly '/api/upload'
-      const response = await fetch('/api/upload', { 
-        method: 'POST',
-        body: formData,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Display success message with the Azure Blob URL
-        setStatus(`File upload successful: ${data.originalName}. URL: ${data.filePath}`);
-        // Use a try/catch to safely extract the extension from the original name
-        let ext = '';
-        try {
-          // Use originalName for extension extraction
-          ext = path.extname(data.originalName).slice(1).toUpperCase();
-        } catch (err) {
-          console.error('Error getting file extension:', err);
-          ext = 'FILE';
-        }
-        window.alert(`${ext} ${data.originalName} was uploaded successfully to ${data.filePath}`);
-        
-        // Refresh file list if we're viewing it
-        if (showFileList) {
-          fetchFileList();
-        }
-      } else {
-        const data = await response.json();
-        setStatus(`Error uploading file: ${response.status} ${data.error || response.statusText}`);
-        console.error("Upload failed response:", data);
-      }
-    } catch (error) {
-      // Log the error for debugging
-      console.error("Upload fetch error:", error); 
-      setStatus(`Upload failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
+    
+    // Open metadata modal instead of direct upload
+    setFileToUpload(file);
+    setIsMetadataModalOpen(true);
   };
 
   // Format file size for display
@@ -166,6 +195,38 @@ const AdminPage = () => {
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
   };
+
+  // Improved effect to ensure navigation to the directory after upload
+  useEffect(() => {
+    if (activeTab === 'fileManager' && uploadResultPath && fileSystemRef.current) {
+      console.log(`Preparing to navigate to directory: ${uploadResultPath}`);
+      
+      // Use a multi-stage approach with longer timeouts to ensure proper navigation
+      const attemptNavigation = () => {
+        if (fileSystemRef.current?.navigateToPath) {
+          console.log(`Executing navigation to directory: ${uploadResultPath}`);
+          
+          // Ensure path is properly formatted (no leading/trailing slashes that could cause confusion)
+          const cleanPath = uploadResultPath.replace(/^\/+|\/+$/g, '');
+          
+          // Call navigateToPath method
+          fileSystemRef.current.navigateToPath(cleanPath);
+          
+          // Set a flag in localStorage to indicate we've attempted navigation
+          localStorage.setItem('lastNavigationAttempt', cleanPath);
+          localStorage.setItem('lastNavigationTime', Date.now().toString());
+          
+          // Clear the path after navigation attempt
+          setUploadResultPath(null);
+        } else {
+          console.error("File system ref or navigateToPath method not available");
+        }
+      };
+      
+      // Wait longer for the component to be fully initialized
+      setTimeout(attemptNavigation, 1500); // Increased from 1000ms to 1500ms
+    }
+  }, [activeTab, uploadResultPath]);
 
   return (
     <main
@@ -256,6 +317,8 @@ const AdminPage = () => {
           >
             File Manager
           </button>
+
+          
         </div>
 
         {/* Show either simple upload, file list, or advanced file manager based on toggle */}
@@ -333,21 +396,21 @@ const AdminPage = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
               <button
                 onClick={handleUpload}
-                disabled={!file}
+                disabled={!file || isUploading}
                 style={{
                   fontSize: '16px',
                   fontWeight: 'bold',
                   margin: '8px',
-                  backgroundColor: file ? '#007bff' : '#cccccc',
+                  backgroundColor: file && !isUploading ? '#007bff' : '#cccccc',
                   color: 'white',
                   padding: '10px 15px',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: file ? 'pointer' : 'not-allowed',
+                  cursor: file && !isUploading ? 'pointer' : 'not-allowed',
                   width: '200px',
                 }}
               >
-                Upload
+                {isUploading ? 'Uploading...' : 'Upload with Metadata'}
               </button>
 
               {status && (
@@ -505,8 +568,25 @@ const AdminPage = () => {
             height: 'calc(100vh - 200px)',
             overflow: 'hidden',
           }}>
-            <BasicFileSystem />
+            <BasicFileSystem 
+              ref={fileSystemRef} 
+            />
           </div>
+        )}
+        
+        {/* Add MetadataModal component */}
+        {isMetadataModalOpen && (
+          <MetadataModal
+            file={fileToUpload}
+            isOpen={isMetadataModalOpen}
+            onClose={() => {
+              setIsMetadataModalOpen(false);
+              setFileToUpload(null);
+            }}
+            onSave={handleSaveMetadata}
+            currentDirectory=""
+            initialMetadata={{}} // Fix the type error by providing an empty object instead of null
+          />
         )}
       </div>
     </main>

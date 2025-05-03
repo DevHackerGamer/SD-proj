@@ -11,7 +11,9 @@ import {
     moveItems,
     copyItems,
     renameItem, // Import renameItem
-    getItemProperties // Import getItemProperties
+    getItemProperties, // Import getItemProperties
+    getMetadataJson, // Import the new controller
+    updateBlobMetadata // Import updateBlobMetadata
 } from '../controllers/blobController.js';
 import multer from 'multer';
 
@@ -36,6 +38,14 @@ router.post('/move-batch', moveItems);
 router.post('/copy-batch', copyItems);
 router.post('/rename', renameItem); // Add POST route for renaming
 router.get('/properties', getItemProperties); // Add GET route for properties
+
+// --- NEW Route ---
+router.get('/metadata', getMetadataJson); // Add route for getting metadata.json content
+// --- END NEW ---
+
+// --- NEW: Add Route for Updating Metadata ---
+router.put('/update-metadata', updateBlobMetadata);
+// --- END NEW ---
 
 // Removed routes for non-existent functions:
 // router.post('/upload-with-metadata', upload.single('file'), uploadWithMetadata);

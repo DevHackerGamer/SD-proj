@@ -9,6 +9,7 @@
     "client/CustomFileManager"
   ],
   "compilerOptions": {
+    // ... existing compilerOptions ...
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node"],  // Removed vite/client as it's causing issues
     "target": "ES2022",
@@ -27,5 +28,10 @@
     "skipLibCheck": true,
     "strict": true,
     "typeRoots": ["node_modules/@types", "client/src/types"]
-  }
+  },
+  "exclude": [ // <-- Add this exclude array if it doesn't exist
+    "node_modules",
+    "build",
+    "dist"
+  ]
 }

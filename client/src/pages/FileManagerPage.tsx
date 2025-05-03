@@ -7,7 +7,6 @@ import {
   useAuth,
 } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
-import BlobFileManager from '../components/BlobFileSystem/BlobFileManager';
 import './FileManagerPage.css'; // We'll create this file for the styles
 
 const FileManagerPage: React.FC = () => {
@@ -54,7 +53,8 @@ const FileManagerPage: React.FC = () => {
 
       <main className="atom-main-content">
         <SignedIn>
-          <BlobFileManager />
+          {/* Remove or comment out the BlobFileManager component instance */}
+          {/* <BlobFileManager accountName={accountName} containerName={containerName} sasToken={sasToken} /> */}
         </SignedIn>
         <SignedOut>
           <div className="atom-auth-required">

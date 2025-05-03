@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { FileSystemItem, FileProperties } from '../components/BlobFileSystem/types'; // Adjust path if needed
 
 const API_BASE_URL = '/api/blob'; // Or your configured base URL
 

@@ -1,1 +1,11 @@
-// ...existing code from .dockerignore...
+# filepath: c:\Users\MSS\source\repos\DevHackerGamer - Copy (4)\SD-proj\.dockerignore
+# Ignore the BlobFileSystem component directory during Docker builds
+client/src/components/BlobFileSystem
+
+# Also good practice to ignore node_modules, build outputs, .git, etc.
+node_modules
+build
+dist
+.git
+.vscode
+*.log
