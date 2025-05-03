@@ -3,6 +3,7 @@ import multer from "multer";
 import { BlobServiceClient } from "@azure/storage-blob";
 import path from "path";
 import dotenv from 'dotenv'; // Keep dotenv import if other routes might need it, but config is in server.js
+import fs from 'fs'; // Import fs for file operations
 // --- Remove updateMetadataJson import ---
 // import { updateMetadataJson } from '../controllers/blobController.js'; // Assuming it's exported there, or keep helper here
 // --- End Remove ---
@@ -76,8 +77,76 @@ router.get("/files", async (req, res) => {
 // --- Pass req, res directly to the imported controller function ---
 import { uploadFile as uploadFileController } from '../controllers/blobController.js'; // Import controller
 
-router.post("/upload", upload.single("file"), uploadFileController);
 // --- End Modified ---
+
+
+export const upsertToPinecone = async (vectorId, text, metadata) => {
+  try {
+    console.log('Connecting to Pinecone index...');
+    const index = pc.index('llama-text-embed-v2-index');
+    console.log('Successfully connected to Pinecone index.');
+
+    console.log('Upserting data to Pinecone...');
+    const upsertResponse = await index.upsert({
+      namespace: 'example-namespace',
+      vectors: [
+        {
+          id: vectorId,
+          values: text, // Ensure this is the embedding vector
+          metadata: metadata,
+        },
+      ],
+    });
+    console.log('Upsert response:', upsertResponse);
+    return upsertResponse;
+  } catch (error) {
+    console.error('Error upserting to Pinecone:', error);
+    throw error;
+  }
+};
+
+
+// --- NEW ROUTE: Upload and process PDF ---
+router.post('/upload/pdf', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    console.log(`[PDF Upload] Received file: ${file.originalname}`);
+
+    // Extract text from the PDF
+    const pdfText = await extractTextFromPDF(file.path);
+    console.log(`[PDF Upload] Extracted text from PDF: ${pdfText.slice(0, 100)}...`); // Log first 100 characters
+
+    // Split text into chunks based on sentences
+    const textChunks = pdfText.split(/(?<=[.!?])\s+/);
+    console.log(`[PDF Upload] Split text into ${textChunks.length} chunks.`);
+
+    // Upsert each chunk to Pinecone
+    for (const chunk of textChunks) {
+      const vectorId = `${file.filename}-${Date.now()}`; // Unique ID for each chunk
+      const metadata = {
+        fileLocation: `/uploads/${file.filename}`, // Adjust based on your storage setup
+      };
+      console.log(`[PDF Upload] Upserting chunk to Pinecone: ${chunk.slice(0, 50)}...`); // Log first 50 characters
+      await upsertToPinecone(vectorId, chunk, metadata);
+    }
+
+    res.json({
+      message: 'PDF uploaded and processed successfully',
+      fileLocation: `/uploads/${file.filename}`,
+    });
+  } catch (error) {
+    console.error('Error uploading PDF:', error);
+    res.status(500).json({ error: 'Failed to upload and process PDF' });
+  }
+});
+// --- END NEW ROUTE ---
+
+router.post("/upload", upload.single("file"), uploadFileController);
+
 
 
 // --- Keep the export ---

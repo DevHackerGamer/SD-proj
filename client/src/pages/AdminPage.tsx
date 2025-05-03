@@ -13,6 +13,7 @@ import { useDropzone } from 'react-dropzone';
 // @ts-ignore
 import path from 'path-browserify';
 import BasicFileSystem from '../components/filesystem/BasicFileSystem';
+import axios from 'axios';
 
 // Define type for file information
 type FileInfo = {
@@ -128,14 +129,7 @@ const AdminPage = () => {
         // Display success message with the Azure Blob URL
         setStatus(`File upload successful: ${data.originalName}. URL: ${data.filePath}`);
         // Use a try/catch to safely extract the extension from the original name
-        let ext = '';
-        try {
-          // Use originalName for extension extraction
-          ext = path.extname(data.originalName).slice(1).toUpperCase();
-        } catch (err) {
-          console.error('Error getting file extension:', err);
-          ext = 'FILE';
-        }
+        const ext = path.extname(data.originalName).slice(1).toUpperCase();
         window.alert(`${ext} ${data.originalName} was uploaded successfully to ${data.filePath}`);
         
         // Refresh file list if we're viewing it
@@ -153,6 +147,37 @@ const AdminPage = () => {
       setStatus(`Upload failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   };
+
+  const handlePinecone = async () => {
+    if (!file) {
+      setStatus('No file selected for Pinecone processing!');
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('file', file);
+    setStatus('Processing file for Pinecone...');
+  
+    try {
+      const response = await fetch('/pinecone/pdf', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (response.status === 200) {
+        const data = response.text;
+        setStatus(`File processed for Pinecone: ${data}`);
+        window.alert(`File processed for Pinecone: ${data}`);
+      } else {
+        setStatus(`Error processing file for Pinecone: ${response.text}`);
+        console.error('Pinecone processing error:', response.text);
+      }
+    } catch (error) {
+      console.error('Error processing file for Pinecone:', error);
+      setStatus(`Error processing file for Pinecone: ${error instanceof Error ? error.message : 'An unknown error occurred'}`);
+    }
+  };
+  
 
   // Format file size for display
   const formatFileSize = (bytes: number): string => {
@@ -332,7 +357,10 @@ const AdminPage = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
               <button
-                onClick={handleUpload}
+                onClick={async () => {
+                  await handleUpload();
+                  await handlePinecone();
+                }}
                 disabled={!file}
                 style={{
                   fontSize: '16px',

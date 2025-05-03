@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
+import { Pinecone } from '@pinecone-database/pinecone';
 import path from 'path'; // Import path
 import { fileURLToPath } from 'url'; // Import fileURLToPath
+
 
 // Calculate __dirname for ES modules early to find the project root
 const __filename = fileURLToPath(import.meta.url);
@@ -28,6 +30,7 @@ const PORT = process.env.PORT || 5000;
 // Initialize Express app
 const app = express();
 
+
 // Middleware
 app.use(cors({
   // Add the port you are testing with (4000) to allowed origins
@@ -48,6 +51,52 @@ console.log(`Serving static files from: ${staticPath}`);
 app.use('/api/webhooks', clerkWebhookRoutes); // Changed from '/api/webhooks/clerk'
 app.use('/api', uploadRoutes); // Use upload routes under /api prefix
 app.use('/api/blob', blobRoutes); // Ensure this uses the correctly imported variable
+app.use('/api/upload', uploadRoutes); // Ensure this uses the correctly imported variable\
+
+
+
+
+
+export const upsertToPinecone = async (vectorId, text, metadata) => {
+  try {
+    console.log('Connecting to Pinecone index...');
+    const index = pc.index('llama-text-embed-v2-index');
+    console.log('Successfully connected to Pinecone index.');
+
+    console.log('Upserting data to Pinecone...');
+    const upsertResponse = await index.upsert({
+      namespace: 'example-namespace',
+      vectors: [
+        {
+          id: vectorId,
+          values: text, // Ensure this is the embedding vector
+          metadata: metadata,
+        },
+      ],
+    });
+    console.log('Upsert response:', upsertResponse);
+    return upsertResponse;
+  } catch (error) {
+    console.error('Error upserting to Pinecone:', error);
+    throw error;
+  }
+};
+
+
+
+app.post('pinecone/pdf', async (req, res) => {
+  const { vectorId, text, fileName } = req.body;
+  console.log('Received data for Pinecone:', { vectorId, text, fileName });
+
+  try {
+    // Call the upsert function from pineconeService
+    const upsertResponse = await upsertToPinecone(vectorId, text, fileName);
+    res.status(200).json(upsertResponse);
+  } catch (error) {
+    console.error('Error in /pinecone/pdf route:', error);
+    res.status(500).json({ error: 'Failed to upsert data to Pinecone' });
+  }
+});
 
 // Catch-all route for React router
 app.get('*', (req, res) => {
@@ -69,5 +118,21 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
+
+// Initialize Pinecone client
+
+const pc = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY,
+});
+
+console.log('Initializing Pinecone client...');
+if (!process.env.PINECONE_API_KEY) {
+    console.error('PINECONE_API_KEY is not set in the environment variables.');
+} else {
+    console.log('PINECONE_API_KEY is set.');
+}
+
 
 export default app;
