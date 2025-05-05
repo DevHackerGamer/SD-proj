@@ -57,7 +57,7 @@ export default defineConfig(({ mode }) => {
       coverage: {
         'src/**/*.{ts,tsx}'
         provider: "v8", 
-        reporter: ["text", "json", "html"],
+        reporter: ["text", "json", "html","ts", "tsx"],
         exclude: [
           ...(configDefaults.coverage?.exclude || []),
           "src/mocks",
