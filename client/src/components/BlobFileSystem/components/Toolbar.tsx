@@ -13,63 +13,67 @@ interface ToolbarProps {
   onSearch: (term: string) => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ 
-  onCreateFolder, 
-  onUpload, 
+<input
+  type="file"
+  ref={fileInputRef}
+  onChange={handleFileChange}
+  multiple
+  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+  style={{ display: 'none' }}
+  data-testid="file-input" // << added!
+/>
+
+
+const Toolbar: React.FC<ToolbarProps> = ({
+  onCreateFolder,
+  onUpload,
   showUploader,
-  searchTerm, 
+  searchTerm,
   onSearch
 }) => {
   const { createDirectory } = useFileSystem();
-  const { 
-    isUploading, 
-    showMetadataForm, 
+  const {
+    isUploading,
+    showMetadataForm,
     filesToUpload,
     prepareFilesForUpload,
     uploadFilesWithMetadata,
     cancelUpload
   } = useFileUpload();
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const handleUploadClick = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.click();
+      fileInputRef.current.click(); // Trigger the hidden input
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      // Prepare files for upload (this will show the metadata form)
+      // Prepare files for upload
       prepareFilesForUpload(e.target.files);
-      
-      // Reset the input to allow selecting the same files again
-      e.target.value = '';
+      e.target.value = ''; // Reset input for repeated selection
     }
-  };
-
-  const handleMetadataSubmit = async (metadata: any, targetPath: string) => {
-    // Upload files with the provided metadata to the specified path
-    await uploadFilesWithMetadata(filesToUpload, targetPath, metadata);
   };
 
   return (
     <>
       <div className="atom-toolbar">
         <div className="toolbar-actions">
-          <button 
+          <button
             className="action-btn"
             onClick={onCreateFolder}
             disabled={isUploading}
           >
             <FaFolderPlus /> Create Folder
           </button>
-          <button 
-            className="action-btn"
+          <button
+            className="action-btn upload-btn" // Apply custom styles
             onClick={handleUploadClick}
             disabled={isUploading}
           >
-            <FaUpload /> {isUploading ? 'Uploading...' : 'Upload Documents'}
+            <FaUpload /> {isUploading ? 'Uploading...' : 'Upload File'}
           </button>
           <input
             type="file"
@@ -77,7 +81,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
             onChange={handleFileChange}
             multiple
             accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
-            style={{ display: 'none' }}
+            style={{ display: 'none' }} // Hide input
           />
         </div>
         <div className="toolbar-search">
@@ -90,11 +94,13 @@ const Toolbar: React.FC<ToolbarProps> = ({
           />
         </div>
       </div>
-      
+
       {showMetadataForm && (
         <MetadataForm
           files={filesToUpload}
-          onSubmit={handleMetadataSubmit}
+          onSubmit={(metadata: any, targetPath: string) =>
+            uploadFilesWithMetadata(filesToUpload, targetPath, metadata)
+          }
           onCancel={cancelUpload}
         />
       )}

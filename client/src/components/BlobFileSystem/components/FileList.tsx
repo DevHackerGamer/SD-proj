@@ -50,7 +50,7 @@ const FileList: React.FC<FileListProps> = (/* { onItemDoubleClick, selectedPaths
               key={item.id}
               // Remove event handlers and className logic for selection
               // onDoubleClick={() => onItemDoubleClick(item)}
-              // onClick={(e) => onItemSelect(item.path, e)}
+                onClick={(e) => onItemSelect(item.path, e)}
               // className={selectedPaths.has(item.path) ? 'selected' : ''}
             >
               {/* Replace Icon components with placeholders */}
@@ -72,4 +72,4 @@ const FileList: React.FC<FileListProps> = (/* { onItemDoubleClick, selectedPaths
   );
 };
 
-export default FileList;v
+export default FileList;

@@ -18,9 +18,24 @@ a, button, .delete-button /* Target delete buttons specifically */ {
 }
 
 button:hover, .delete-button:hover {
-    background-color: #e0e0e0; /* Darker grey on hover */
+  background-color: #e0e0e0; /* Darker grey on hover */
 }
 
+/* Upload Button Custom Styles */
+.action-btn.upload-btn {
+  background-color: #007BFF; /* Blue background */
+  color: #ffffff; /* White text */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px; /* Rounded corners */
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+.action-btn.upload-btn:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
 
 /* Style specific components if needed */
 .atom-header h1 {
@@ -28,7 +43,7 @@ button:hover, .delete-button:hover {
 }
 
 .atom-breadcrumb a, .atom-breadcrumb span {
-   color: #000000;
+  color: #000000;
 }
 
 .atom-file-list-item, .atom-grid-view-item {
@@ -64,7 +79,6 @@ button:hover, .delete-button:hover {
   line-height: 18px; /* Center content vertically */
 }
 /* --- END NEW/MODIFIED --- */
-
 
 .atom-file-list-item:hover, .atom-grid-view-item:hover {
   background-color: #eeeeee; /* Slightly darker grey on hover */
@@ -192,7 +206,6 @@ button:hover, .delete-button:hover {
 .file-list-table th.col-name,
 .file-list-table td.col-name {
   width: auto; /* Allow name to take remaining space */
-  /* Or set a specific width/percentage: e.g., width: 60%; */
   text-align: left; /* Default alignment for name */
   padding-left: 12px; /* Ensure some padding for name */
   padding-right: 12px;
@@ -202,9 +215,7 @@ button:hover, .delete-button:hover {
 .file-list-table th.col-size, /* Target header specifically */
 .file-list-table td.col-size { /* Target data cell specifically */
   width: 100px; /* Example fixed width */
-  /* Or use percentage: e.g., width: 15%; */
   text-align: right; /* Ensure right alignment for both th and td */
-  /* --- Add specific padding for spacing --- */
   padding-right: 20px; /* Increase right padding for space AFTER size */
 }
 
@@ -212,9 +223,7 @@ button:hover, .delete-button:hover {
 .file-list-table th.col-date, /* Target header specifically */
 .file-list-table td.col-date { /* Target data cell specifically */
   width: 160px; /* Example fixed width */
-  /* Or use percentage: e.g., width: 20%; */
   text-align: right; /* Ensure right alignment for both th and td */
-  /* --- Add specific padding for spacing --- */
   padding-left: 20px; /* Increase left padding for space BEFORE date */
   padding-right: 12px; /* Keep some padding at the end */
 }
