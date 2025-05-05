@@ -6,8 +6,8 @@ const HomePage = () => {
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = event.target as HTMLFormElement;
-    const searchQuery = form.search.value.trim();
+    const formData = new FormData(event.currentTarget);
+    const searchQuery = formData.get('search')?.toString().trim();
     if (!searchQuery) {
       console.error('Search query cannot be empty.');
       return;

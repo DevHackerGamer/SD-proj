@@ -5,6 +5,8 @@
     "moduleResolution": "node",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "types": ["jest","@testing-library/jest-dom"]
+  },
+  "include": ["src","setupTests.ts"]
 }

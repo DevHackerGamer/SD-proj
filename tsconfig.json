@@ -9,11 +9,11 @@
     "client/CustomFileManager"
   ],
   "compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["node"],  // Removed vite/client as it's causing issues
-    "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
+    "lib": ["DOM", "DOM.Iterable", "ES2022","esnext"],
+    "types": ["node","jest"],  // Removed vite/client as it's causing issues added jest for testing
+   "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "jsx": "react-jsx",
     "rootDirs": [".", "./.react-router/types"],
     "baseUrl": ".",
@@ -21,7 +21,7 @@
       "~/*": ["./client/src/*"]
     },
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

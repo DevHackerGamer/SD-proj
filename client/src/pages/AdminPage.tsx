@@ -226,6 +226,7 @@ const AdminPage = () => {
           marginBottom: '10px'
         }}>
           <button
+            data-testid = "quick-upload-bttn"
             onClick={() => setActiveTab('upload')}
             style={{
               padding: '10px 15px',
@@ -243,6 +244,7 @@ const AdminPage = () => {
          
           <button
             onClick={() => setActiveTab('fileManager')}
+            data-testid = "fileManager-bttn"
             style={{
               padding: '10px 15px',
               backgroundColor: activeTab === 'fileManager' ? '#007bff' : '#e9ecef',
@@ -267,7 +269,7 @@ const AdminPage = () => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             width: '100%',
           }}>
-            <h2 style={{ marginTop: 0, color: '#333' }}>Upload Files</h2>
+            <h2 data-testid ="upload-files-H" style={{ marginTop: 0, color: '#333' }}>Upload Files</h2>
             
             <div
               {...getRootProps()}
@@ -314,6 +316,7 @@ const AdminPage = () => {
                 </p>
               ) : (
                 <p
+                  data-testid = "upload-files-P"
                   style={{
                     textAlign: 'center',
                     padding: '20px',
@@ -332,6 +335,7 @@ const AdminPage = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
               <button
+                data-testid = "upload-button"
                 onClick={handleUpload}
                 disabled={!file}
                 style={{
@@ -351,7 +355,9 @@ const AdminPage = () => {
               </button>
 
               {status && (
-                <p style={{ 
+                <p 
+                  data-testid = "upload-status"
+                  style={{ 
                   margin: '10px 0', 
                   padding: '10px', 
                   borderRadius: '4px',
@@ -496,7 +502,7 @@ const AdminPage = () => {
         )}
 
         {activeTab === 'fileManager' && (
-          <div style={{
+          <div data-testid ="try" style={{
             backgroundColor: '#fff',
             padding: '0',
             borderRadius: '8px',
