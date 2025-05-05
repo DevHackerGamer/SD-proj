@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path'; // Import path
 import { fileURLToPath } from 'url'; // Import fileURLToPath
+import {router as pineconeRoutes} from './routes/pineconeRoutes.js'; // Import pinecone routes
 
 // Calculate __dirname for ES modules early to find the project root
 const __filename = fileURLToPath(import.meta.url);
@@ -48,6 +49,8 @@ console.log(`Serving static files from: ${staticPath}`);
 app.use('/api/webhooks', clerkWebhookRoutes); // Changed from '/api/webhooks/clerk'
 app.use('/api', uploadRoutes); // Use upload routes under /api prefix
 app.use('/api/blob', blobRoutes); // Ensure this uses the correctly imported variable
+
+app.use('/api/pinecone', pineconeRoutes); // Use pinecone routes under /api prefix
 
 // Catch-all route for React router
 app.get('*', (req, res) => {

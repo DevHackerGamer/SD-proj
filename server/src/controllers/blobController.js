@@ -11,6 +11,8 @@ import stream from 'stream'; // Import stream for pipeline
 import crypto from 'crypto'; // Import crypto for UUID generation
 import { formatMetadataForAzure, updateMetadataJsonFile } from '../utils/metadataHelper.js'; // Assuming helper exists
 import { v4 as uuidv4 } from 'uuid'; // For generating documentId
+import { embedAndStore } from '../pineconeStuff/pineconeServe.js';
+import { extractTextFromPDF } from '../pineconeStuff/embed.js';
 
 // --- Configuration ---
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -428,7 +430,7 @@ export const uploadFile = async (req, res) => {
   console.log(`[Server] /upload - Attempting: "${req.file.originalname}" to blob "${blobName}"`);
 
   try {
-    const client = ensureClient();
+    const { client, credential } = ensureClientAndCredentials(); // Ensure this function provides `credential`
     const blockBlobClient = client.getBlockBlobClient(blobName);
 
     // --- Handle Document ID ---
@@ -488,6 +490,41 @@ export const uploadFile = async (req, res) => {
     }
     // --- *** END CRUCIAL STEP *** ---
 
+     // --- Generate SAS URL ---
+     const sasOptions = {
+        containerName: containerName,
+        blobName: blobName,
+        startsOn: new Date(),
+        expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // 1 hour expiry
+        permissions: BlobSASPermissions.parse("r"), // Read-only permissions
+      };
+  
+      const sasToken = generateBlobSASQueryParameters(sasOptions, credential).toString();
+      const sasUrl = `${blockBlobClient.url}?${sasToken}`;
+      console.log(`[Server] /upload - SAS URL generated: ${sasUrl}`);
+      // --- End Generate SAS URL ---
+
+      
+
+    // --- Handle embedding and storing in Pinecone ---
+
+    if (filteredBlobMetadata.filetype === 'pdf') {
+        console.log(`[Server] /upload - PDF detected for embedding: ${blobName}`);
+        // assume there is a function to extract text from PDF
+        const text = await extractTextFromPDF(req.file.buffer); // Placeholder function
+        if (text) {
+            console.log(`[Server] /upload - Extracted text from PDF for embedding.`);
+            // Embed by sentence for better granularity
+            const sentences = text.split('.').map(s => s.trim()).filter(s => s.length > 0);
+            for (const sentence of sentences) {
+                await embedAndStore(sentence, sasUrl);
+            }
+            console.log(`[Server] /upload - Embedded and stored in Pinecone.`);
+        } else {
+            console.warn(`[Server] /upload - No text extracted from PDF for embedding.`);
+        }
+    }
+
     // --- Update metadata.json in the parent directory ---
     const parentDirectory = path.posix.dirname(blobName); // Use posix.dirname
     const fileName = path.posix.basename(blobName);
@@ -514,6 +551,8 @@ export const uploadFile = async (req, res) => {
         filePath: blobName, // Return the full path used for the blob
         documentId: documentId // Return the ID used/generated
     });
+    //log metadata for debugging
+    console.log(`[Server] /upload - Metadata for blob "${blobName}":`, filteredBlobMetadata);
     // --- End Return ---
 
   } catch (error) {
