@@ -1,0 +1,313 @@
+/* Component-specific styles */
+/* Make sure directories are visually distinct */
+.file-list-item[data-is-directory="true"], .file-grid-item[data-is-directory="true"] {
+  background-color: rgba(255, 248, 225, 0.3);
+}
+
+/* Add a subtle hover effect */
+.file-list-item:hover, .file-grid-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Specific grid layout styles */
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 16px;
+  padding: 16px;
+}
+
+.file-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  text-align: center;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.file-grid-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* List view styles */
+.file-list-container {
+  height: 100%;
+  overflow: auto;
+  background-color: white;
+}
+
+.file-list-header {
+  display: grid;
+  grid-template-columns: auto 120px 150px 100px;
+  padding: 8px 16px;
+  font-weight: bold;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #333;
+  color: white;
+}
+
+.file-list-item {
+  display: grid;
+  grid-template-columns: auto 120px 150px 80px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
+  background-color: white;
+}
+
+/* Breadcrumb */
+.breadcrumb-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+.breadcrumb-item:hover {
+  background-color: #e9ecef;
+}
+
+.breadcrumb-separator {
+  color: #6c757d;
+  margin: 0 5px;
+  font-size: 0.8rem;
+}
+
+/* View controls */
+.view-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-btn:hover {
+  background-color: #e9ecef;
+}
+
+.view-btn.active {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+/* Keep Connection Status styles */
+.connection-status {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  padding: 8px 15px; /* Slightly larger padding */
+  border-radius: 4px;
+  font-size: 0.9em; /* Slightly larger font */
+  z-index: 1000;
+  opacity: 0.9; /* Slightly more opaque */
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Add shadow */
+}
+
+.connection-status.online {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.connection-status.offline {
+  background-color: #f44336; /* Red */
+  color: white;
+}
+
+/* Add specific style for error state */
+.connection-status.error {
+   font-weight: bold;
+}
+
+.connection-status.checking {
+  background-color: #ffeb3b; /* Yellow */
+  color: #333;
+}
+
+/* Add style for the main error message display in BlobFileManager */
+.error-message {
+  padding: 20px;
+  background-color: #ffebee; /* Light red background */
+  color: #c62828; /* Darker red text */
+  border: 1px solid #e57373; /* Red border */
+  border-radius: 4px;
+  margin: 20px;
+  font-weight: bold;
+}
+
+/* Add style for simplified container */
+.atom-archive-system.simplified .atom-main-container {
+  grid-template-columns: 1fr; /* Remove sidebar column */
+}
+
+.atom-archive-system.simplified .atom-content-area {
+   padding: 15px; /* Add some padding */
+}
+
+/* Remove or comment out styles for: */
+/* - Search bar (.atom-search-bar) */
+/* - Sidebar components (.browse-options, .atom-hierarchy-tree, .atom-tag-selector, .tag-list, .atom-tag, .atom-sidebar-section) */
+/* - Document Viewer (.atom-document-viewer, .document-viewer-header, etc.) */
+/* - Delete confirmation modal (.delete-confirmation-overlay, etc.) */
+/* - Search results component (.atom-search-results, etc.) */
+/* - Metadata Form styles (.atom-metadata-form-overlay, etc.) */
+/* - Upload progress indicator (.upload-progress-indicator, etc.) */
+/* - Specific AtoM styles if not needed for basic layout (.atom-subtitle, etc.) */
+
+/* Header */
+.atom-header h1 {
+  color: #000000;
+  margin: 0 0 10px 0; /* Adjust margin */
+}
+
+/* Breadcrumb */
+.atom-breadcrumb a, .atom-breadcrumb span {
+   color: #000000;
+   margin-right: 5px;
+}
+.atom-breadcrumb button { /* Style breadcrumb navigation buttons */
+   color: #000000;
+   background: none;
+   border: none;
+   padding: 0 5px;
+   cursor: pointer;
+   text-decoration: underline;
+}
+
+/* File List / Grid Items */
+.atom-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: #ffffff; /* Ensure list background is white */
+  color: #000000; /* Default text color for list */
+}
+
+.atom-file-list-item, .atom-grid-view-item {
+  border: 1px solid #cccccc; 
+  background-color: #f9f9f9; 
+  color: #000000 !important; /* Force black text on the item container */
+  padding: 8px 12px; 
+  margin-bottom: 5px; 
+  display: flex; 
+  align-items: center;
+  cursor: pointer;
+}
+
+.atom-file-list-item:hover, .atom-grid-view-item:hover {
+  background-color: #eeeeee; 
+}
+
+/* --- FORCE BLACK TEXT --- */
+/* Target ALL direct children and specific classes within list items */
+.atom-file-list-item > *, /* Target direct children like spans, divs */
+.atom-file-list-item .name, 
+.atom-file-list-item .size, 
+.atom-file-list-item .lastModified,
+.atom-file-list-item .icon, /* Ensure icon text/emoji is black */
+.atom-file-list-item button, /* Ensure button text is black */
+.atom-grid-view-item > *,
+.atom-grid-view-item .name,
+.atom-grid-view-item .icon,
+.atom-grid-view-item button {
+  color: #000000 !important; /* FORCE black text */
+  background-color: transparent; /* Ensure no weird background colors */
+}
+
+/* Specific overrides if the above isn't enough */
+.atom-file-list-item .name {
+  color: #000000 !important; 
+  flex-grow: 1; 
+  margin-right: 10px;
+}
+
+.atom-file-list-item .size,
+.atom-file-list-item .lastModified {
+  color: #111111 !important; /* Very dark grey, almost black */
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+/* --- END FORCE BLACK TEXT --- */
+
+/* Icon Placeholder */
+.atom-file-list-item .icon {
+  margin-right: 10px;
+  width: 20px; 
+  height: 20px;
+  display: inline-block;
+  border: 1px solid #555; 
+  text-align: center;
+  line-height: 18px; 
+  /* color already forced above */
+}
+
+/* Buttons */
+button, .delete-button {
+  color: #000000 !important; 
+  background-color: #f0f0f0; 
+  border: 1px solid #ccc;
+  padding: 4px 8px; /* Slightly larger padding */
+  cursor: pointer;
+  margin-left: 10px; 
+  border-radius: 3px; /* Add slight rounding */
+}
+
+button:hover, .delete-button:hover {
+    background-color: #e0e0e0; 
+}
+
+/* Upload Area */
+.upload-area { /* Assuming you have a container for upload */
+  margin-top: 15px;
+  padding: 10px;
+  border: 1px dashed #ccc;
+  background-color: #fdfdfd;
+}
+
+.upload-area label, .upload-area input[type="file"] {
+   color: #000000; /* Ensure upload text is black */
+}

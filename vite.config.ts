@@ -55,6 +55,7 @@ export default defineConfig(({ mode }) => {
       passWithNoTests: true,
       environment: "jsdom",
       coverage: {
+        'src/**/*.{ts,tsx}'
         provider: "v8", 
         reporter: ["text", "json", "html"],
         exclude: [

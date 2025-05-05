@@ -1,0 +1,115 @@
+.atom-application {
+  font-family: Arial, sans-serif;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+}
+
+.atom-global-header {
+  background-color: #2c3e50;
+  color: white;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.atom-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+}
+
+.atom-logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.atom-user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.atom-welcome-text {
+  font-size: 0.9rem;
+  color: white;
+}
+
+.atom-main-navigation {
+  background-color: #34495e;
+}
+
+.atom-main-navigation ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.atom-main-navigation li a {
+  display: block;
+  padding: 0.8rem 1.5rem;
+  color: white;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.atom-main-navigation li a:hover,
+.atom-main-navigation li a.active {
+  background-color: #1abc9c;
+}
+
+.atom-main-content {
+  flex: 1;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+.atom-auth-required {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  background-color: #f8f9fa;
+}
+
+.atom-auth-message {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  max-width: 500px;
+  color: #333;
+}
+
+.atom-auth-message h2 {
+  color: #2c3e50;
+}
+
+.atom-signin-button {
+  margin-top: 1.5rem;
+}
+
+.atom-footer {
+  background-color: #2c3e50;
+  color: white;
+  padding: 1.5rem 2rem;
+  font-size: 0.9rem;
+  margin-top: auto;
+}
+
+.atom-footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.atom-footer a {
+  color: #1abc9c;
+  text-decoration: none;
+  margin: 0 0.5rem;
+}
