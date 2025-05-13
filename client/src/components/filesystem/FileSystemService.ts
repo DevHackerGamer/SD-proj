@@ -1,10 +1,47 @@
 import axios, { AxiosError } from 'axios';
-// Ensure FileMetadata is included in the import
-import type { BlobItem, FileMetadata, UploadOptions, BlobItemProperties } from './types'; // Add BlobItemProperties
+import type { BlobItem, BlobItemProperties, FileMetadata } from './types'; // Ensure FileMetadata is imported
+import path from 'path-browserify'; // Import path
+
+// Define the expected structure of metadata.json content
+interface DirectoryMetadata {
+  files: Record<string, FileMetadata>; // Assuming metadata stored here is already in FileMetadata format
+  folders: Record<string, any>; // Define folder structure if needed, using 'any' for now
+}
+
+// --- NEW: Define structure for metadata_fields.json ---
+export interface MetadataFieldOption {
+  [key: string]: string[] | Record<string, string[]>;
+}
+
+export interface MetadataFieldConfig {
+  type: 'select' | 'hierarchical-select' | 'multi-select-checkbox' | 'hierarchical-input' | 'comma-input' | 'date' | 'textarea' | 'filename' | 'text'; // Add more types as needed
+  label: string;
+  options?: string[] | MetadataFieldOption;
+  dependsOn?: string;
+  allowManualEntry?: boolean;
+  required?: boolean;
+}
+
+export interface MetadataCategoryConfig {
+  id: string;
+  title: string;
+  fields: string[];
+  description?: string;
+}
+
+export interface MetadataFieldsFile {
+  categories: MetadataCategoryConfig[];
+  fields: Record<string, MetadataFieldConfig>;
+}
+// --- END NEW ---
 
 export class FileSystemService {
   // Using relative path assuming Vite proxy handles '/api'
   private readonly apiBase = '/api/blob';
+// --- NEW: Cache for metadata config ---
+  private metadataConfigCache: MetadataFieldsFile | null = null;
+  private metadataConfigPromise: Promise<MetadataFieldsFile> | null = null;
+  // --- END NEW ---
 
   async listFiles(directory: string = ''): Promise<BlobItem[]> {
     const endpoint = `${this.apiBase}/list`;
@@ -260,6 +297,171 @@ export class FileSystemService {
     }
   }
 
+  // --- NEW: Get Metadata JSON Content ---
+  async getMetadataJson(metadataPath: string): Promise<any> { // Return type is 'any' for now, refine if needed
+    const endpoint = `${this.apiBase}/metadata`;
+    console.log(`[Service] Getting metadata content for: "${metadataPath}"`);
+    try {
+      const encodedPath = encodeURIComponent(metadataPath);
+      const response = await axios.get<any>(`${endpoint}?path=${encodedPath}`);
+      console.log(`[Service] Received metadata content for "${metadataPath}"`);
+      return response.data; // The backend should return the parsed JSON object
+    } catch (error) { // error is unknown
+      this.handleApiError(error, `get metadata content for "${metadataPath}"`);
+      throw new Error(`Failed to get metadata content for ${metadataPath}`);
+    }
+  }
+  // --- END NEW ---
+
+  // --- NEW: Get Directory Metadata (metadata.json) ---
+  async getDirectoryMetadata(directoryPath: string): Promise<DirectoryMetadata | null> {
+    // Construct the path to metadata.json, ensuring forward slashes and handling root
+    const metadataJsonPath = path.join(directoryPath || '', 'metadata.json');
+    console.log(`[Service] Attempting to fetch directory metadata from: "${metadataJsonPath}"`);
+    const endpoint = `${this.apiBase}/download`; // Use the existing download endpoint
+
+    try {
+      // Use getDownloadUrl to get a SAS URL for metadata.json
+      const sasUrl = await this.getDownloadUrl(metadataJsonPath);
+
+      // Fetch the content using the SAS URL
+      const response = await axios.get<DirectoryMetadata>(sasUrl, {
+        // Important: Tell axios to expect JSON, but handle potential non-JSON responses
+        responseType: 'json',
+        // Validate status to handle 404 gracefully if SAS URL is generated but file deleted
+        validateStatus: function (status) {
+          return status >= 200 && status < 300 || status === 404;
+        },
+        // Prevent Axios from automatically parsing non-JSON responses as errors
+        transformResponse: [(data) => {
+            // If data is already an object (likely parsed JSON), return it
+            if (typeof data === 'object' && data !== null) {
+                return data;
+            }
+            // If data is a string, try parsing it
+            if (typeof data === 'string') {
+                try {
+                    return JSON.parse(data);
+                } catch (e) {
+                    // If parsing fails, return null or throw a specific error
+                    console.warn(`[Service] Failed to parse metadata.json content for "${metadataJsonPath}"`);
+                    return null;
+                }
+            }
+            // Return null for unexpected data types
+            return null;
+        }]
+      });
+
+      if (response.status === 404 || response.data === null) {
+        console.log(`[Service] metadata.json not found or invalid content at "${metadataJsonPath}".`);
+        return null;
+      }
+
+      // Basic validation of the structure
+      if (typeof response.data === 'object' && response.data !== null) {
+         // Ensure files and folders properties exist, even if empty
+         const validatedData: DirectoryMetadata = {
+             files: response.data.files || {},
+             folders: response.data.folders || {},
+         };
+         console.log(`[Service] Successfully fetched and parsed metadata.json for "${directoryPath}".`);
+         return validatedData;
+      } else {
+         console.warn(`[Service] Fetched data for metadata.json is not a valid object for "${metadataJsonPath}".`);
+         return null;
+      }
+
+    } catch (error) {
+      // Check specifically for 404 errors from getDownloadUrl (meaning metadata.json doesn't exist)
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        console.log(`[Service] metadata.json not found at "${metadataJsonPath}" (via getDownloadUrl).`);
+        return null; // File not found is not necessarily an error in this context
+      }
+      // Log other errors
+      this.handleApiError(error, `fetch directory metadata for "${directoryPath}"`);
+      return null; // Return null on other errors
+    }
+  }
+  // --- END NEW ---
+
+  // --- NEW: Update Blob Metadata ---
+  async updateBlobMetadata(blobPath: string, metadata: FileMetadata): Promise<{ message: string }> {
+    const endpoint = `${this.apiBase}/update-metadata`;
+    console.log(`[Service] Updating metadata for: "${blobPath}"`);
+    try {
+      // Backend expects { blobPath: string, metadata: string }
+      const response = await axios.put<{ message: string }>(endpoint, {
+        blobPath: blobPath,
+        metadata: JSON.stringify(metadata) // Send metadata as a JSON string
+      });
+      console.log(`[Service] Metadata update successful for "${blobPath}":`, response.data.message);
+      return response.data;
+    } catch (error) { // error is unknown
+      this.handleApiError(error, `update metadata for "${blobPath}"`);
+      throw new Error(`Failed to update metadata for ${blobPath}`);
+    }
+  }
+  // --- END NEW ---
+
+  // --- NEW: Get Metadata Fields Configuration ---
+  // Accept configFileName as parameter, default to 'metadata_fields.json'
+  async getMetadataFieldsConfig(configFileName: string = 'metadata_fields.json'): Promise<MetadataFieldsFile> {
+    console.log('[Service] Getting metadata fields configuration...');
+
+    // Return from cache if available
+    if (this.metadataConfigCache) {
+      console.log('[Service] Returning cached metadata config.');
+      return this.metadataConfigCache;
+    }
+
+    // Return existing promise if fetch is already in progress
+    if (this.metadataConfigPromise) {
+      console.log('[Service] Fetch already in progress, returning existing promise.');
+      return this.metadataConfigPromise;
+    }
+
+    // Fetch from server
+    this.metadataConfigPromise = (async () => {
+      try {
+        // Option 1: Use a dedicated endpoint (Recommended)
+        // const response = await axios.get<MetadataFieldsFile>(`${this.apiBase}/metadata-config`);
+        // this.metadataConfigCache = response.data;
+
+        // Option 2: Fetch directly using download URL (Simpler for now)
+        console.log(`[Service] Fetching ${configFileName} using download URL.`);
+        const sasUrl = await this.getDownloadUrl(configFileName); // Assumes config is at root
+        const response = await axios.get(sasUrl, { responseType: 'json' }); // Expect JSON directly
+
+        if (typeof response.data !== 'object' || response.data === null) {
+          throw new Error('Invalid JSON received for metadata configuration.');
+        }
+
+        // Basic validation (can be expanded)
+        if (!response.data.categories || !response.data.fields) {
+            throw new Error('Metadata configuration is missing required "categories" or "fields" properties.');
+        }
+
+        this.metadataConfigCache = response.data as MetadataFieldsFile;
+        console.log('[Service] Successfully fetched and cached metadata config.');
+        return this.metadataConfigCache;
+
+      } catch (error) {
+        console.error('[Service] Failed to fetch or parse metadata configuration:', error);
+        // Clear promise to allow retrying
+        this.metadataConfigPromise = null;
+        // Re-throw a more specific error
+        throw new Error(`Failed to load metadata configuration (${configFileName}): ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+          // Clear the promise once resolved or rejected, unless caching is desired for the promise itself
+          // this.metadataConfigPromise = null; // Keep it null only on error if you want to retry
+      }
+    })();
+
+    return this.metadataConfigPromise;
+  }
+  // --- END NEW ---
+
   // Helper for consistent error handling - Revised Again
   private handleApiError(error: unknown, operation: string, parsedError?: any): never {
     let message = `Failed to ${operation}.`;
@@ -294,6 +496,67 @@ export class FileSystemService {
 
     console.error(`[Service] Original error object for "${operation}":`, error);
     throw new Error(message); // Always throw a standard Error
+  }
+
+  // Add a new method to search files by metadata
+  async searchFilesByMetadata(tags: { category: string, tag: string }[]): Promise<BlobItem[]> {
+    // Prepare the search parameters
+    const searchParams = new URLSearchParams();
+    
+    // Add each tag as a search parameter
+    tags.forEach(({ category, tag }) => {
+      searchParams.append('tags', `${category}:${tag}`);
+    });
+    
+    try {
+      // Make API call to search endpoint
+      const response = await axios.get(`/api/search?${searchParams.toString()}`);
+      
+      // Transform API response into BlobItem[] format
+      return response.data.map((item: any) => ({
+        name: item.name,
+        path: item.path,
+        isDirectory: false, // Search results are always files
+        size: item.size,
+        lastModified: item.lastModified,
+        metadata: item.metadata || {},
+        contentType: item.contentType || 'application/octet-stream'
+      }));
+    } catch (error) {
+      console.error('Error searching files by metadata:', error);
+      throw new Error('Failed to search files by metadata');
+    }
+  }
+
+  /**
+   * Search for files by metadata across the storage
+   * @param filters Object with categories as keys and arrays of tags as values
+   * @returns Search results with matching items
+   */
+  async searchByMetadata(filters: Record<string, string[]>): Promise<{
+    items: BlobItem[];
+    totalItems?: number;
+  }> {
+    try {
+      // Use the fetch API instead of apiClient
+      const response = await fetch('/api/files/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filters }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Search request failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error in searchByMetadata:', error);
+      throw error; // Don't use handleApiError if it requires more parameters
+    }
   }
 }
 

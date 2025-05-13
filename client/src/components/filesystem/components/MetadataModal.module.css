@@ -1,0 +1,949 @@
+/* Main modal layout */
+.modalContainer {
+  display: flex;
+  flex-direction: row;
+  height: 75vh; /* Increased from default */
+  color: #333;
+  max-height: 700px; /* Increased max height */
+}
+
+/* Left sidebar styles */
+.sidebar {
+  width: 280px; /* Slightly wider sidebar */
+  min-width: 280px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #e9ecef;
+  padding: 20px 10px;
+  overflow-y: auto;
+  border-radius: 8px 0 0 8px;
+}
+
+/* Improved scrollbar styling */
+.sidebar::-webkit-scrollbar,
+.formContent::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track,
+.formContent::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb,
+.formContent::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover,
+.formContent::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Firefox scrollbar styling */
+.sidebar,
+.formContent {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Document ID badge styling in sidebar */
+.documentIdBadge {
+  margin: 0 15px 15px 15px;
+  padding: 10px;
+  background-color: #f0f7ff;
+  border: 1px solid #d0e3ff;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.documentIdLabel {
+  font-weight: 600;
+  color: #0056b3;
+}
+
+.documentIdValue {
+  font-family: monospace;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+
+/* Category section in sidebar */
+.categorySection {
+  margin-bottom: 15px;
+}
+
+.categoryTitle {
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  color: #6c757d;
+  padding: 8px 12px;
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+/* Category button styling */
+.categoryButton {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 10px; /* Larger padding */
+  background: none;
+  border: none;
+  font-size: 1rem; /* Larger font */
+  color: #495057;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-bottom: 5px;
+  border-radius: 4px;
+}
+
+.categoryButton:hover {
+  background-color: #e9ecef;
+  color: #0056b3;
+}
+
+.categoryButton.active {
+  background-color: #e8f4ff;
+  color: #0056b3;
+  border-left-color: #0056b3;
+  font-weight: 500;
+}
+
+.categoryIcon {
+  margin-right: 10px;
+  width: 20px;
+  text-align: center;
+  font-size: 1.1rem; /* Larger icons */
+  opacity: 0.7;
+  color: #6c757d;
+}
+
+.categoryButton:hover .categoryIcon,
+.categoryButton.active .categoryIcon {
+  opacity: 1;
+}
+
+/* Add options button */
+.addOptionsButton {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 10px 15px;
+  background-color: #e2e6ea;
+  border: none;
+  font-size: 0.9rem;
+  color: #495057;
+  cursor: pointer;
+  margin-top: 10px;
+  border-radius: 0 0 4px 4px;
+  transition: all 0.2s ease;
+}
+
+.addOptionsButton:hover {
+  background-color: #d1d5d9;
+  color: #212529;
+}
+
+.addOptionsIcon {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+/* Form content area */
+.formContent {
+  flex: 1;
+  padding: 20px 30px; /* Increased padding */
+  overflow-y: auto;
+}
+
+/* Section styling */
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  font-size: 1.3rem; /* Larger title */
+  color: #212529;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.formSection {
+  display: none;
+  animation: fadeIn 0.3s ease;
+  margin-bottom: 30px;
+}
+
+.formSection.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- Option tag styles --- */
+.optionTagsContainer {
+  margin-top: 5px; /* Reduced margin */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.optionTag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #d1e7fd; /* Slightly different blue for selected tags */
+  border: 1px solid #a6cffc;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+  color: #0a58ca;
+  transition: all 0.2s ease;
+}
+
+.optionTag:hover {
+  background-color: #d0e8ff;
+}
+
+.removeTagButton {
+  background: none;
+  border: none;
+  color: #0a58ca; /* Match tag color */
+  margin-left: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.removeTagButton:hover {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Options Editor Modal */
+.optionsEditorModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: fadeIn 0.2s ease;
+}
+
+.optionsEditorContent {
+  background-color: white;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 90%;
+  max-height: 80vh;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.optionsEditorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.optionsEditorTitle {
+  font-size: 1.2rem;
+  color: #212529;
+  margin: 0;
+}
+
+.optionsEditorCloseButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.optionsListContainer {
+  margin-bottom: 20px;
+}
+
+.optionItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.optionItemText {
+  flex-grow: 1;
+}
+
+.deleteOptionButton {
+  background: none;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.deleteOptionButton:hover {
+  opacity: 1;
+}
+
+.addOptionForm {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.addOptionInput {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.addOptionButton {
+  padding: 8px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.addOptionButton:hover {
+  background-color: #0069d9;
+}
+
+.addOptionButton:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.optionsEditorActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e9ecef;
+}
+
+.optionsEditorCancelButton {
+  padding: 8px 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.optionsEditorCancelButton:hover {
+  background-color: #e2e6ea;
+}
+
+.optionsEditorSaveButton {
+  padding: 8px 15px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.optionsEditorSaveButton:hover {
+  background-color: #218838;
+}
+
+/* Add or update these styles in the existing CSS */
+
+.stepNavigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px; /* More space above buttons */
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.prevButton, .nextButton {
+  min-width: 130px; /* Wider buttons */
+  padding: 10px 20px; /* Larger padding */
+  font-size: 1rem; /* Larger font */
+}
+
+.nextButton {
+  margin-left: auto;
+}
+
+.stepNumber {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #007bff;
+  color: white;
+  min-width: 28px; /* Fixed width */
+  height: 28px; /* Fixed height */
+  border-radius: 50%;
+  margin-right: 10px; /* Increased spacing */
+  font-size: 0.9rem;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.activeStep .stepNumber {
+  background-color: #28a745;
+}
+
+.activeStep {
+  background-color: #f8f9fa;
+  border-left: 3px solid #28a745;
+  padding-left: 8px;
+}
+
+/* Container for the step title text */
+.stepTitleText {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Progress bar styling */
+.progressContainer {
+  width: 100%;
+  background-color: #f1f3f5;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  height: 6px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: #28a745;
+  transition: width 0.3s ease;
+}
+
+/* Modal header */
+.modalHeader {
+  display: flex; /* Use flexbox */
+  justify-content: space-between; /* Pushes close button to the right */
+  align-items: flex-start; /* Align items to the top */
+  padding: 15px 25px !important; /* Adjusted padding */
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  position: relative; /* Needed for absolute positioning of close button */
+}
+
+.modalHeader h3 {
+  font-size: 1.4rem !important; /* Adjusted title size */
+  margin-bottom: 5px !important; /* Ensure space below title */
+}
+
+/* Container for path preview and toggle icon */
+.pathPreviewContainer {
+  display: flex;
+  align-items: flex-start; /* Align items to the top */
+  position: relative; /* For positioning the icon */
+  margin-top: 5px;
+}
+
+/* Style for the path preview text area */
+.pathPreviewHeader {
+  flex-grow: 1; /* Allow text area to take available space */
+  font-size: 0.9rem;
+  color: #6c757d;
+  background-color: #e9ecef;
+  padding: 8px 12px;
+  border-radius: 4px;
+  white-space: pre-line; /* Respect newline characters AND collapse multiple spaces */
+  overflow-wrap: break-word;
+  line-height: 1.4;
+  box-sizing: border-box;
+  font-family: 'Courier New', Courier, monospace;
+  display: block;
+  max-height: 150px; /* Adjust max-height as needed */
+  overflow-y: auto;
+  margin-right: 30px; /* Space for the icon */
+}
+
+/* Style for the expand/collapse toggle icon */
+.pathToggleIcon {
+  position: absolute; /* Position relative to the container */
+  top: 5px; /* Adjust vertical position */
+  right: 5px; /* Adjust horizontal position */
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 3px;
+  font-size: 0.9rem; /* Adjust icon size */
+  line-height: 1;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.pathToggleIcon:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #343a40;
+}
+
+/* Make sure all error messages are visible */
+.error {
+  color: #dc3545;
+  padding: 10px;
+  margin: 15px 0;
+  border-left: 4px solid #dc3545;
+  background-color: #f8d7da;
+  border-radius: 4px;
+}
+
+/* Add styles for available options display */
+.availableOptionsContainer {
+  margin-top: 12px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #f0f7ff;
+  border: 1px solid #d0e3ff;
+  border-radius: 4px;
+}
+
+.availableOptionsLabel {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #0056b3;
+  margin-bottom: 8px;
+}
+
+.availableOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.availableOption {
+  display: inline-block;
+  background-color: #fff;
+  border: 1px solid #b8daff;
+  border-radius: 15px;
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.availableOption:hover {
+  background-color: #0056b3;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles for thematic focus help */
+.helpContainer {
+  margin: 15px 0;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+}
+
+.helpContainer h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  color: #495057;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.helpContent {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.themeCategory {
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+}
+
+.themeCategory h5 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #0056b3;
+  font-size: 0.95rem;
+}
+
+.themeCategory ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.themeCategory li {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+/* Enhanced styling for thematic focus subthemes */
+.selectedPrimaryTheme {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  color: #0056b3;
+  font-weight: 600;
+}
+
+.predefinedOptionsContainer {
+  margin: 10px 0 15px 0;
+  padding: 12px 15px;
+  background-color: #f0f7ff;
+  border: 1px solid #b8daff;
+  border-radius: 6px;
+}
+
+.predefinedOptionsLabel {
+  display: block;
+  font-size: 0.9rem;
+  color: #0056b3;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.predefinedOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.predefinedOption {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #d9e8f6;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.predefinedOption:hover {
+  background-color: #e6f2ff;
+  transform: translateY(-1px);
+}
+
+.predefinedOption.selected {
+  background-color: #0056b3;
+  color: white;
+  border-color: #004494;
+}
+
+.optionCheckmark {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  color: #0056b3;
+  border-radius: 50%;
+  margin-right: 8px;
+  font-weight: bold;
+  font-size: 0.7rem;
+}
+
+.predefinedOption.selected .optionCheckmark {
+  background-color: white;
+  color: #0056b3;
+}
+
+.subthemesTextInput {
+  margin-bottom: 15px;
+}
+
+.manualEntryLabel {
+  display: block;
+  font-size: 0.85rem;
+  color: #495057;
+  margin-bottom: 5px;
+}
+
+.selectPrimaryFirst {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px dashed #ced4da;
+  border-radius: 4px;
+  text-align: center;
+  margin-bottom: 15px;
+  color: #6c757d;
+}
+
+/* Improved subtheme selection UI */
+.subthemeSelectionContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 15px;
+  background-color: #f0f7ff;
+  border: 1px solid #b8daff;
+  border-radius: 6px;
+}
+
+.subthemeCheckbox {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.subthemeCheckbox input[type="checkbox"] {
+  margin-right: 10px; /* Increased spacing */
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #0056b3; /* Match theme color */
+}
+
+.subthemeCheckbox label {
+  cursor: pointer;
+  font-size: 0.95rem;
+  user-select: none; /* Prevent text selection on click */
+  color: #333; /* Darker text for readability */
+}
+
+.noSubthemesMessage {
+  padding: 10px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Styles for displaying selected subthemes as tags */
+.selectedSubthemesDisplay {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e9ecef; /* Separator */
+}
+
+.selectedSubthemesLabel {
+  font-size: 0.9rem;
+  color: #495057;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.selectedSubthemes {
+  margin-top: 15px;
+}
+
+.selectedSubthemesLabel {
+  font-size: 0.9rem;
+  color: #495057;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Path preview styles */
+.pathPreview {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  font-family: monospace; /* Good for paths */
+}
+
+.pathPreview h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  color: #495057;
+  font-family: inherit; /* Reset monospace */
+}
+
+.pathPreviewContent {
+  word-break: break-all; /* Prevent long paths overflowing */
+  color: #0056b3;
+  font-size: 0.9rem;
+  margin-bottom: 8px; /* Add space before filename preview */
+}
+
+.fileNamePreview {
+  font-size: 0.85rem;
+  color: #6c757d;
+  word-break: break-all;
+}
+
+.fileNamePreview span {
+  font-weight: 500;
+  color: #495057;
+}
+
+/* Styles for Confirmation Step */
+.confirmationContainer {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 20px; /* Space before navigation buttons */
+}
+
+.summaryItem {
+  display: grid;
+  grid-template-columns: 180px 1fr; /* Fixed label width, flexible value */
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e9ecef;
+  font-size: 0.95rem;
+}
+
+.summaryItem:last-child {
+  border-bottom: none;
+}
+
+.summaryItem.longItem {
+  grid-template-columns: 1fr; /* Allow long items like description to take full width */
+}
+
+.summaryItem.longItem .summaryLabel {
+  margin-bottom: 5px; /* Space between label and value */
+}
+
+.summaryLabel {
+  font-weight: 600;
+  color: #495057;
+  padding-right: 10px;
+  text-align: right;
+}
+
+.summaryItem.longItem .summaryLabel {
+  text-align: left; /* Align label left for long items */
+}
+
+.summaryValue {
+  color: #212529;
+  word-break: break-word; /* Break long values */
+}
+
+.summaryValue.pathValue {
+  font-family: monospace;
+  color: #0056b3;
+  background-color: #e9ecef;
+  padding: 2px 5px;
+  border-radius: 3px;
+  display: inline-block; /* Fit content */
+}
+
+/* Adjust sidebar active state */
+.categorySection.activeStep {
+  background-color: #e7f1ff; /* Highlight the whole active step section */
+  border-left: 4px solid #0056b3;
+  margin-left: -4px; /* Adjust for border */
+}
+
+.categorySection.activeStep .categoryTitle {
+  color: #0056b3; /* Make title stand out */
+}
+
+/* Ensure sidebar category sections are clickable */
+.categorySection {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.categorySection:hover {
+   background-color: #f0f7ff;
+}
+
+/* Style the react-datepicker input to match other inputs */
+.datePickerInput {
+  width: 100%; /* Make it full width */
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.datePickerInput:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Optional: Style the date picker popper */
+.react-datepicker-popper {
+  z-index: 10; /* Ensure it appears above other modal content */
+}
+
+/* Style for the reset filename button */
+.resetFilenameButton {
+  margin-left: 10px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  vertical-align: middle; /* Align with the input */
+}
+
+.resetFilenameButton:hover {
+  background-color: #5a6268;
+}
+
+/* Adjust path preview for filename */
+.fileNamePreview span {
+  font-weight: 500;
+  color: #495057;
+  margin-right: 5px;
+}

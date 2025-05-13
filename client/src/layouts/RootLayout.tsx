@@ -1,6 +1,8 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
+import { SlArrowLeftCircle,SlArrowRightCircle   } from "react-icons/sl";
+
 
 const RootLayout = () => {
   const { isSignedIn } = useAuth();
@@ -11,10 +13,10 @@ const RootLayout = () => {
 
   if (isSignedIn) {
     if (location.pathname === '/admin') {
-      navLinkText = "goHome";
+      navLinkText = "";
       navLinkPath = "/";
     } else {
-      navLinkText = "goAdmin";
+      navLinkText = "";
       navLinkPath = "/admin";
     }
   }
@@ -32,21 +34,25 @@ const RootLayout = () => {
               Archive
             </Link>
           </h1>
-
+          
           {/* Right side - goAdmin/goHome + Profile Icon */}
           <nav className="flex items-center gap-6">
-            <Link
-              to={navLinkPath}
-              className="text-gray-300 hover:text-blue-400 text-center min-w-16"
-            >
-              {navLinkText}
-            </Link>
-
             <SignedIn>
+              <Link
+                to={navLinkPath}
+                className="text-gray-300 hover:text-blue-400 text-center text-2xl"
+              >
+                {location.pathname === '/admin' ? <SlArrowLeftCircle /> : <SlArrowRightCircle />}
+              </Link>
               <UserButton />
             </SignedIn>
             <SignedOut>
-              <SignInButton />
+              <SignInButton>
+                <button 
+                className="text-gray-300 hover:text-blue-400 px-4 py-2 rounded transition-transform">
+                  Sign In
+                </button>
+              </SignInButton>
             </SignedOut>
           </nav>
 

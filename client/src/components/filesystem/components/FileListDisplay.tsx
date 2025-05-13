@@ -3,9 +3,11 @@ import type { BlobItem, SortKey, SortDirection } from '../types'; // Import type
 import styles from '../BasicFileSystem.module.css'; // Assuming styles are imported from the parent's module
 import { formatFileSize, formatDate } from '../utils/formatters'; // Go up two levels to src/utils
 // --- Import Action Icons ---
-import { FaDownload, FaTrashAlt } from 'react-icons/fa'; // Import required icons
+import { FaDownload, FaTrashAlt, FaFilter, FaFolder } from 'react-icons/fa'; // Import required icons
 // --- End Import ---
 import { FileIcon, FolderIcon } from './Icons'; // Assuming Icons.tsx is in the same directory
+// Remove framer-motion dependency to avoid conflicts with drag events
+// import { motion } from 'framer-motion';
 
 interface FileListDisplayProps {
   items: BlobItem[];
@@ -13,7 +15,7 @@ interface FileListDisplayProps {
   onDelete: (path: string) => void;
   onItemDoubleClick: (item: BlobItem) => void;
   selectedPaths: Set<string>;
-  onItemSelect: (path: string, isSelected: boolean) => void;
+  onItemSelect: (path: string, isSelected: boolean, isCheckboxClick?: boolean) => void;
   itemsToMovePathsSet: Set<string>; // Set for quick lookup
   renamingPath: string | null;
   tempNewName: string;
@@ -23,18 +25,20 @@ interface FileListDisplayProps {
   onContextMenu: (event: React.MouseEvent, item: BlobItem) => void;
   draggedItemPath: string | null;
   dragOverPath: string | null;
-  onDragStart: (event: React.DragEvent, itemPath: string) => void;
-  onDragEnd: () => void;
-  onDragOver: (event: React.DragEvent, targetPath: string) => void;
-  onDragEnter: (event: React.DragEvent, targetPath: string) => void;
-  onDragLeave: (event: React.DragEvent, targetPath: string) => void;
-  onDrop: (event: React.DragEvent, targetFolderPath: string) => void;
+  onDragStart: (event: React.DragEvent<HTMLDivElement>, itemPath: string) => void;
+  onDragEnd: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver: (event: React.DragEvent<HTMLDivElement>, targetPath: string) => void;
+  onDragEnter: (event: React.DragEvent<HTMLDivElement>, targetPath: string) => void;
+  onDragLeave: (event: React.DragEvent<HTMLDivElement>, targetPath: string) => void;
+  onDrop: (event: React.DragEvent<HTMLDivElement>, targetPath: string) => void;
   onSelectAll: (isChecked: boolean) => void; // Add select all handler prop
   sortKey: SortKey; // Add sort props
   sortDirection: SortDirection;
   onSort: (key: SortKey) => void;
   onDownload: (item: BlobItem) => void; // Add download handler prop
   highlightedPath?: string | null; // Make optional or required based on usage
+  onEditMetadata: (item: BlobItem) => void; // Add edit metadata handler prop
+  isFiltering?: boolean; // Add isFiltering prop
 }
 
 const FileListDisplay: React.FC<FileListDisplayProps> = ({
@@ -65,6 +69,8 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
   onSort,
   onDownload, // Use download handler
   highlightedPath,
+  onEditMetadata, // Use edit metadata handler
+  isFiltering = false, // Use isFiltering prop
 }) => {
   // --- REMOVED: State for hover effect ---
   // const [isHoveringItem, setIsHoveringItem] = useState(false);
@@ -141,7 +147,21 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
       {isLoading ? (
         <div className={styles.loading}>Loading...</div>
       ) : items.length === 0 ? (
-        <div className={styles.empty}>Folder is empty.</div>
+        <div className={styles.emptyState}>
+          {isFiltering ? (
+            <>
+              <FaFilter size={48} className={styles.emptyIcon} />
+              <h3>No matching files</h3> {/* Fixed closing h3 tag */}
+              <p>Try adjusting your filter criteria</p>
+            </>
+          ) : (
+            <>
+              <FaFolder size={48} className={styles.emptyIcon} />
+              <h3>This folder is empty</h3>
+              <p>Drag and drop files here to upload</p>
+            </>
+          )}
+        </div>
       ) : (
         items.map((item) => {
           const isSelected = selectedPaths.has(item.path);
@@ -150,17 +170,33 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
           const isDraggingThis = draggedItemPath === item.path;
           const isDragOverTarget = dragOverPath === item.path && item.isDirectory && !isDraggingThis;
 
+          // Add a CSS class if we're filtering
+          const rowClassName = `${styles.fileItem} 
+            ${isSelected ? styles.selected : ''}
+            ${isMarkedForMove ? styles.markedForMove : ''}
+            ${isDraggingThis ? styles.dragging : ''}
+            ${isDragOverTarget ? styles.dragOver : ''}
+            ${isFiltering ? styles.filteredItem : ''}
+            ${highlightedPath === item.path ? styles.highlighted : ''}`;
+
           return (
             <div
               key={item.path}
               id={`file-item-${item.path}`} // Add unique ID for scrolling/highlighting
-              className={`
-                ${styles.fileItem}
-                ${isSelected ? styles.selected : ''}
-                ${isMarkedForMove ? styles.markedForMove : ''}
-                ${isDraggingThis ? styles.dragging : ''}
-                ${isDragOverTarget ? styles.dragOver : ''}
-              `}
+              className={rowClassName}
+              // Add onClick handler to select the item on single click
+              onClick={(e) => {
+                // Don't select on checkbox click - that's handled separately
+                if ((e.target as HTMLElement).closest(`.${styles.itemCheckbox}`)) {
+                  return;
+                }
+                // Don't select on button click
+                if ((e.target as HTMLElement).closest('button')) {
+                  return;
+                }
+                // Toggle selection on click with false for isCheckboxClick
+                onItemSelect(item.path, !isSelected, false);
+              }}
               onDoubleClick={() => !isRenamingThis && onItemDoubleClick(item)}
               onContextMenu={(e) => !isRenamingThis && onContextMenu(e, item)}
               draggable={!isRenamingThis} // Make items draggable
@@ -180,7 +216,12 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
                 type="checkbox"
                 className={styles.itemCheckbox}
                 checked={isSelected}
-                onChange={(e) => onItemSelect(item.path, e.target.checked)}
+                onChange={(e) => {
+                  // Pass true for isCheckboxClick parameter
+                  onItemSelect(item.path, e.target.checked, true);
+                  e.stopPropagation(); // Prevent row click from firing
+                }}
+                onClick={(e) => e.stopPropagation()} // Prevent row click from firing
                 disabled={isRenamingThis} // Disable checkbox when renaming
               />
               <span className={styles.itemIcon}>

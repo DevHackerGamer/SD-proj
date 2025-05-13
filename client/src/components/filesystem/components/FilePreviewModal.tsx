@@ -1,152 +1,133 @@
 import React, { useState, useEffect } from 'react';
 import type { BlobItem } from '../types';
-import { fileSystemService } from '../FileSystemService'; // To get download URL
-import styles from '../BasicFileSystem.module.css'; // Use shared styles for now
+import styles from '../BasicFileSystem.module.css';
+import { fileSystemService } from '../FileSystemService'; // Import the service
+import path from 'path-browserify'; // Import path-browserify
 
 interface FilePreviewModalProps {
   item: BlobItem | null;
   onClose: () => void;
 }
 
-// Helper function to check if a content type is likely text-based
-const isTextBasedContentType = (contentType: string | undefined): boolean => {
-  if (!contentType) return false;
-  return contentType.startsWith('text/') ||
-         contentType === 'application/json' ||
-         contentType === 'application/xml' ||
-         contentType === 'application/javascript'; // Add more as needed
-};
-
 const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ item, onClose }) => {
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [content, setContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoadingUrl, setIsLoadingUrl] = useState<boolean>(false);
-  // --- NEW: State for text content ---
-  const [textContent, setTextContent] = useState<string | null>(null);
-  const [isLoadingText, setIsLoadingText] = useState<boolean>(false);
-  // --- END NEW ---
+  const [sasUrl, setSasUrl] = useState<string | null>(null); // Keep SAS URL for non-text types
 
   useEffect(() => {
-    // Reset states when item changes or modal opens/closes
-    setDownloadUrl(null);
-    setError(null);
-    setTextContent(null); // Reset text content
-    setIsLoadingUrl(false);
-    setIsLoadingText(false);
-
-    if (item && !item.isDirectory) {
-      setIsLoadingUrl(true);
-      fileSystemService.getDownloadUrl(item.path)
-        .then(url => {
-          setDownloadUrl(url);
-          // --- NEW: Fetch text content if applicable ---
-          if (isTextBasedContentType(item.contentType)) {
-            setIsLoadingText(true);
-            fetch(url) // Fetch content using the SAS URL
-              .then(response => {
-                if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.text();
-              })
-              .then(text => {
-                setTextContent(text);
-              })
-              .catch(fetchErr => {
-                console.error("Failed to fetch text content:", fetchErr);
-                setError("Could not load text content for preview.");
-              })
-              .finally(() => {
-                setIsLoadingText(false);
-              });
-          }
-          // --- END NEW ---
-        })
-        .catch(err => {
-          console.error("Failed to get download URL:", err);
-          setError("Could not retrieve file link."); // More generic error
-        })
-        .finally(() => {
-          setIsLoadingUrl(false);
-        });
+    if (!item || item.isDirectory) {
+      setContent(null);
+      setSasUrl(null);
+      setError(null);
+      setIsLoading(false);
+      return;
     }
+
+    setIsLoading(true);
+    setError(null);
+    setContent(null); // Reset content
+    setSasUrl(null); // Reset SAS URL
+
+    const fetchContent = async () => {
+      try {
+        // --- Fetch SAS URL first (needed for images/PDFs and download link) ---
+        const url = await fileSystemService.getDownloadUrl(item.path);
+        setSasUrl(url);
+        console.log(`[PreviewModal] Got SAS URL for ${item.name}`);
+        // --- End Fetch SAS URL ---
+
+        // --- Check if it's metadata.json ---
+        if (item.name === 'metadata.json' && item.contentType?.includes('json')) {
+            console.log(`[PreviewModal] Fetching metadata content via service for ${item.path}`);
+            // Use the service to get metadata content via backend proxy
+            const metadataContent = await fileSystemService.getMetadataJson(item.path);
+            setContent(JSON.stringify(metadataContent, null, 2)); // Pretty print JSON
+            console.log(`[PreviewModal] Successfully fetched metadata content for ${item.path}`);
+        }
+        // --- REMOVE direct fetch for text/* ---
+        // else if (item.contentType?.startsWith('text/')) {
+        //   console.log(`[PreviewModal] Fetching text content directly using SAS URL for ${item.name}`);
+        //   // Fetch text content directly using the SAS URL (CORS *might* be configured for GET on text/*)
+        //   // If this still fails CORS, text files would also need backend proxying
+        //   const response = await fetch(url); // Use the fetched SAS URL
+        //   if (!response.ok) {
+        //     throw new Error(`HTTP error! status: ${response.status}`);
+        //   }
+        //   const textContent = await response.text();
+        //   setContent(textContent);
+        //   console.log(`[PreviewModal] Successfully fetched text content for ${item.name}`);
+        // }
+        // --- END REMOVE ---
+        // --- For non-text/non-metadata types, we just need the SAS URL (handled above) ---
+        else if (!item.contentType?.startsWith('text/')) { // Added condition to be explicit
+             console.log(`[PreviewModal] Non-text/metadata file type (${item.contentType}), using SAS URL directly for rendering.`);
+             // No need to fetch content here, the URL is used in the iframe/img src
+        } else {
+            // Handle text files now - no inline preview, rely on fallback
+            console.log(`[PreviewModal] Text file type (${item.contentType}), inline preview disabled due to potential CORS. Use download link.`);
+        }
+
+
+      } catch (err: any) {
+        console.error(`[PreviewModal] Failed to fetch content for ${item.name}:`, err);
+        const message = err instanceof Error ? err.message : String(err);
+        setError(`Failed to load preview: ${message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchContent();
+
   }, [item]); // Dependency array includes item
 
   if (!item) {
-    return null; // Don't render if no item is selected
+    return null;
   }
 
-  const renderPreview = () => {
-    // Handle loading states first
-    if (isLoadingUrl) return <p>Loading file info...</p>;
-    if (error && !textContent) return <p>Could not load preview: {error}</p>; // Show error if URL/text fetch failed
-
-    // If we have the downloadUrl (even if text fetch failed, we might show fallback)
-    if (downloadUrl) {
-        // Preview images directly
-        if (item.contentType?.startsWith('image/')) {
-          return <img src={downloadUrl} alt={item.name} className={styles.previewImage} />; // Use a class for styling
-        }
-        // Embed PDFs
-        if (item.contentType === 'application/pdf') {
-          return (
-            <iframe
-              src={downloadUrl}
-              className={styles.previewPdf} // Use a class for styling
-              title={item.name}
-              frameBorder="0" // Optional: remove iframe border
-            />
-          );
-        }
-        // --- NEW: Display Text Content ---
-        if (isTextBasedContentType(item.contentType)) {
-          if (isLoadingText) return <p>Loading text content...</p>;
-          if (textContent !== null) {
-            // Use <pre> for preserving formatting
-            return <pre className={styles.previewText}>{textContent}</pre>;
-          }
-          // If text fetch failed but we reached here, show specific error
-          if (error) return <p>Could not load text content: {error}</p>;
-        }
-        // --- END NEW ---
+  const renderContent = () => {
+    if (isLoading) {
+      return <div className={styles.loading}>Loading preview...</div>;
+    }
+    if (error) {
+      return <div className={styles.error}>{error}</div>;
+    }
+    if (!sasUrl && !content) { // If no URL and no text content
+        return <div className={styles.error}>Could not load preview content.</div>;
     }
 
-    // Fallback for other types or if downloadUrl is missing after load attempt
-    return (
-      <div>
-        <p>Preview not available for this file type ({item.contentType || 'unknown'}).</p>
-        <p>Filename: {item.name}</p>
-        <p>Size: {item.size ? `${(item.size / 1024).toFixed(1)} KB` : 'N/A'}</p>
-      </div>
-    );
+    // Use content state ONLY for metadata.json (since text fetch was removed)
+    if (content && item?.name === 'metadata.json') {
+      return <pre className={styles.previewTextContent}>{content}</pre>;
+    }
+
+    // Use sasUrl for other types (images, pdf)
+    if (sasUrl) {
+        if (item?.contentType?.startsWith('image/')) {
+          return <img src={sasUrl} alt={item.name} style={{ maxWidth: '100%', maxHeight: '80vh' }} />;
+        }
+        if (item?.contentType === 'application/pdf') {
+          return <iframe src={sasUrl} title={item.name} style={{ width: '100%', height: '80vh', border: 'none' }}></iframe>;
+        }
+        // Add other preview types if needed (e.g., video, audio)
+        // ...
+    }
+
+    // Fallback for text files and other non-previewable types
+    // Ensure sasUrl exists for the download link
+    const downloadUrl = sasUrl || '#'; // Use '#' as fallback if URL fetch failed
+    const typeMessage = item?.contentType ? `(${item.contentType})` : '';
+    return <p>Preview not available for this file type {typeMessage}. <a href={downloadUrl} target="_blank" rel="noopener noreferrer" download={item?.name}>Download file</a></p>;
   };
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <button className={styles.modalCloseButton} onClick={onClose}>×</button>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h3>Preview: {item.name}</h3>
-        <div className={styles.modalPreviewArea}>
-          {renderPreview()}
-        </div>
-        <div className={styles.modalActions}>
-          {/* Display error more prominently if it prevents download */}
-          {error && !downloadUrl && <p className={`${styles.error} ${styles.inlineError}`}>{error}</p>}
-          {isLoadingUrl && <p>Loading download link...</p>}
-          {downloadUrl && (
-            <a
-              href={downloadUrl}
-              download={item.name} // Suggest original filename for download
-              target="_blank" // Open in new tab might be safer depending on browser behavior
-              rel="noopener noreferrer"
-              className={styles.modalDownloadButton}
-            >
-              Download
-            </a>
-          )}
-          {!downloadUrl && !isLoadingUrl && !error && (
-             <button disabled className={styles.modalDownloadButton}>Download Unavailable</button>
-          )}
+        <button className={styles.modalCloseButton} onClick={onClose}>×</button>
+        <div className={styles.previewArea}>
+          {renderContent()}
         </div>
       </div>
     </div>

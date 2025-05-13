@@ -19,3 +19,28 @@ body {
 /* body {
   min-height: 100vh;
 } */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1f2937;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+p {
+  @apply text-gray-800 dark:text-gray-300 leading-relaxed;
+  font-size:large;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
