@@ -10,7 +10,7 @@
 , "client/tests/setup.ts"  ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["node"],  // Removed vite/client as it's causing issues
+    "types": ["node","jest"],  // Removed vite/client as it's causing issues //added jest for testing
     "target": "ES2022",
     "module": "ES2022",
     "moduleResolution": "bundler",
@@ -18,10 +18,11 @@
     "rootDirs": [".", "./.react-router/types"],
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./client/src/*"]
+      "@/*": ["./client/src/*"]
     },
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,
+    "allowSyntheticDefaultImports": true,
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

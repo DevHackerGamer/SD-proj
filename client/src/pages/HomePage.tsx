@@ -19,6 +19,7 @@ const HomePage = () => {
   const handleSearch = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!searchQuery.trim() && selectedTags.length === 0) {
+      console.error('Search query cannot be empty.');
       setError('Search query cannot be empty.');
       return;
     }
@@ -114,7 +115,15 @@ const HomePage = () => {
           ))}
         </section>
       )}
-
+      {/* Error Message */}
+      {error && (
+        <div
+          role="alert"
+          className="mt-4 p-4 bg-red-600 text-white rounded-md"
+        >
+          {error}
+        </div>
+      )}
       {/* Search Form */}
       <form
         onSubmit={handleSearch}
@@ -139,6 +148,7 @@ const HomePage = () => {
           <input
             type="text"
             name="search"
+            data-testid="search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for documents, cases, or events..."
@@ -147,8 +157,9 @@ const HomePage = () => {
         </div>
         <button
           type="submit"
+          data-testid="search-button"
           className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading}
+          // disabled={loading}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

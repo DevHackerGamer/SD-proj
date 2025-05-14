@@ -4,7 +4,6 @@ import { defineConfig, loadEnv } from "vite"; // Import loadEnv
 import tsconfigPaths from "vite-tsconfig-paths";
 import path from "path";
 import { fileURLToPath } from "url";
-import { configDefaults } from "vitest/config"; 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,21 +46,6 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
-      },
-    },
-    test: {
-      globals: true,
-      setupFiles: "tests/setup.ts",
-      passWithNoTests: true,
-      environment: "jsdom",
-      coverage: {
-        provider: "v8", 
-        reporter: ["text", "json", "html","ts", "tsx"],
-        exclude: [
-          ...(configDefaults.coverage?.exclude || []),
-          "src/mocks",
-          "tests/setup.ts"
-        ],
       },
     },
     resolve: {
