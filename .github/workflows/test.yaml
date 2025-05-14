@@ -23,4 +23,4 @@ jobs:
         run: npm install
 
       - name: Run Jest with coverage
-        run: npx jest --coverage
+        run: npm test -- --coverage
