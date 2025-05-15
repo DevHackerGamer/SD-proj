@@ -29,25 +29,15 @@ import { FaFolder, FaFile } from 'react-icons/fa';
 // Add import for MetadataFilterBar
 import MetadataFilterBar from './components/MetadataFilterBar';
 
-// Add framer-motion for animations
-import { motion } from 'framer-motion'; 
-// Add filter icons
-import { FaFilter, FaTimesCircle } from 'react-icons/fa'; 
-
 const MENU_ID = "file-item-menu";
 
-// Ensure the component definition is correct
-// Update the FileSystemRefType to include navigateToPath
+// Define a ref type for external components to trigger the file upload
 export type FileSystemRefType = {
   triggerFileUpload: () => void;
-  navigateToPath: (path: string) => void;
 };
 
 // Convert to forwardRef to expose methods to parent components
 const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
-  // Add fileInputRef declaration right after the existing state declarations
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const [items, setItems] = useState<BlobItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null); // Keep for status bar if needed, but use toast for popups
@@ -94,14 +84,6 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
   // Add state for selected metadata tags
   const [selectedMetadataTags, setSelectedMetadataTags] = useState<{ category: string, tag: string }[]>([]);
 
-  // Add new state for filtered items and filter status
-  const [filteredItems, setFilteredItems] = useState<BlobItem[]>([]);
-  const [isFiltering, setIsFiltering] = useState<boolean>(false);
-  const [filterStats, setFilterStats] = useState<{total: number, filtered: number}>({total: 0, filtered: 0});
-
-  // Add the missing state variable
-  const [isMetadataFilterMode, setIsMetadataFilterMode] = useState<boolean>(false);
-
   // --- Context Menu Hook ---
   const { show } = useContextMenu({ id: MENU_ID });
   // --- End Context Menu ---
@@ -111,6 +93,19 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
   const notifyError = (message: string) => toast.error(message);
   const notifyInfo = (message: string) => toast.info(message);
   // --- End Helper ---
+
+  // Create a ref for the file input element
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Expose methods to parent components
+  useImperativeHandle(ref, () => ({
+    triggerFileUpload: () => {
+      // Trigger the file input click programmatically
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }
+  }));
 
   // Function to check if paths were actually modified before triggering a move
   const pathsActuallyDifferent = (oldPath: string, newPath: string): boolean => {
@@ -171,9 +166,8 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
   // --- End Replace ---
 
   // --- Rename handleUploadWithMetadata to handleSaveMetadata and update logic ---
-  // --- Modified handleSaveMetadata to use quieter notifications ---
   const handleSaveMetadata = async (metadata: FileMetadata, targetPath: string, isEditing: boolean, file?: File | null) => {
-      setUploading(true);
+      setUploading(true); // Use uploading state for both upload and update
       setError(null);
       setHighlightedPath(null);
       console.log(`[Save Metadata Handler] Starting save. Is Editing: ${isEditing}, Path: ${targetPath}`);
@@ -264,8 +258,7 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
               // --- End Call ---
           }
 
-          // Just log the success but don't use toast notification
-          console.log(resultMessage);
+          notifySuccess(resultMessage);
 
           // --- Focus/Highlight Logic (use resultPath) ---
           const targetDirectory = path.dirname(resultPath);
@@ -345,10 +338,8 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
       
       // Part 7: Workflow Stage
       if (sp.workflowStage?.primary) {
-          // Fix: Check for both sub and subthemes to handle older data formats
-          const workflowSub = sp.workflowStage.sub || (sp.workflowStage as any).subthemes?.[0];
-          const workflowPart = workflowSub
-              ? `${sp.workflowStage.primary}_${workflowSub}` 
+          const workflowPart = sp.workflowStage.sub 
+              ? `${sp.workflowStage.primary}_${sp.workflowStage.sub}` 
               : sp.workflowStage.primary;
           pathParts.push(workflowPart);
       }
@@ -1215,271 +1206,6 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
   }, [items, sortKey, sortDirection]);
   // --- END Memoize ---
 
-  // Define a constant for the directory structure categories
-  const DIRECTORY_STRUCTURE_CATEGORIES = [
-    'collection',
-    'jurisdictionName', 
-    'thematicFocusPrimary',
-    'issuingAuthorityName',
-    'documentFunction',
-    'version',
-    'workflowStagePrimary'
-  ];
-
-  // Create a new useEffect to handle filtering when selectedMetadataTags changes
-  useEffect(() => {
-    if (!items || !Array.isArray(items)) return;
-    
-    if (selectedMetadataTags.length === 0) {
-      // No filters applied
-      setFilteredItems(sortedItems);
-      setIsFiltering(false);
-      setFilterStats({total: sortedItems.length, filtered: sortedItems.length});
-      return;
-    }
-    
-    // Group filters by category for more efficient filtering
-    const filtersByCategory = selectedMetadataTags.reduce((acc, {category, tag}) => {
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(tag);
-      return acc;
-    }, {} as Record<string, string[]>);
-    
-    console.log('[Filter] Applying filters:', filtersByCategory);
-    
-    // Special handling for single directory structure category filters
-    const selectedCategories = Object.keys(filtersByCategory);
-    
-    // If we have only one category filter and it's a directory structure, try direct navigation
-    if (selectedCategories.length === 1 && 
-        DIRECTORY_STRUCTURE_CATEGORIES.includes(selectedCategories[0]) && 
-        filtersByCategory[selectedCategories[0]].length === 1) {
-      
-      const category = selectedCategories[0];
-      const tag = filtersByCategory[category][0];
-      
-      // Handle the simple case of direct collection navigation
-      if (category === 'collection') {
-        console.log(`[Filter] Navigating to collection directory: ${tag}`);
-        navigateTo(tag);
-        return;
-      }
-      
-      // Handle category-based navigation for nested structures
-      // (This is optional - we could remove and just use filtering)
-      if (category === 'jurisdictionName' && currentPath.includes('/')) {
-        const collection = currentPath.split('/')[0];
-        navigateTo(`${collection}/${tag}`);
-        return;
-      }
-    }
-    
-    // Switch to proper filtering - CHANGE FROM AND TO OR LOGIC
-    const filtered = sortedItems.filter(item => {
-      // Always include directories for navigation
-      if (item.isDirectory) return true;
-      
-      // If item has no metadata, it can't match any filters
-      if (!item.metadata) return false;
-      
-      // Parse the item's metadata
-      const itemMetadata = parseBlobMetadataToFileMetadata(item.metadata);
-      
-      // For filtering logic, use OR between categories (match any category)
-      return selectedCategories.some(category => {
-        const tags = filtersByCategory[category];
-        
-        // Switch through different metadata field types
-        switch(category) {
-          case 'collection':
-            return tags.includes(itemMetadata.structuredPath?.collection || '');
-          
-          case 'jurisdictionType':
-            return tags.includes(itemMetadata.structuredPath?.jurisdiction?.type || '');
-            
-          case 'jurisdictionName':
-            return tags.includes(itemMetadata.structuredPath?.jurisdiction?.name || '');
-            
-          case 'thematicFocusPrimary':
-            return tags.includes(itemMetadata.structuredPath?.thematicFocus?.primary || '');
-            
-          case 'thematicFocusSubthemes':
-            const thematicSub = itemMetadata.structuredPath?.thematicFocus?.sub || 
-                               (itemMetadata.structuredPath?.thematicFocus as any)?.subthemes?.[0];
-            return thematicSub ? tags.includes(thematicSub) : false;
-            
-          case 'issuingAuthorityType':
-            return tags.includes(itemMetadata.structuredPath?.issuingAuthority?.type || '');
-            
-          case 'issuingAuthorityName':
-            return tags.includes(itemMetadata.structuredPath?.issuingAuthority?.name || '');
-            
-          case 'documentFunction':
-            return tags.includes(itemMetadata.structuredPath?.documentFunction || '');
-            
-          case 'version':
-            return tags.includes(itemMetadata.structuredPath?.version || '');
-            
-          case 'workflowStagePrimary':
-            return tags.includes(itemMetadata.structuredPath?.workflowStage?.primary || '');
-            
-          case 'workflowStageSub':
-            const workflowSub = itemMetadata.structuredPath?.workflowStage?.sub || 
-                               (itemMetadata.structuredPath?.workflowStage as any)?.subthemes?.[0];
-            return workflowSub ? tags.includes(workflowSub) : false;
-            
-          case 'fileType':
-            // Extract file extension from name
-            const fileExt = item.name.split('.').pop()?.toLowerCase();
-            return tags.includes(fileExt || '');
-            
-          case 'language':
-            return tags.includes(itemMetadata.language || '');
-            
-          case 'accessLevel':
-            return tags.includes(itemMetadata.accessLevel || '');
-            
-          case 'license':
-            return tags.includes(itemMetadata.license || '');
-            
-          case 'tags':
-            // Check if any of the item's tags match any of the selected tags
-            return (itemMetadata.tags || []).some(itemTag => 
-              tags.includes(itemTag)
-            );
-            
-          default:
-            return false;
-        }
-      });
-    });
-    
-    // Update state with filtered results
-    setFilteredItems(filtered);
-    setIsFiltering(true);
-    setFilterStats({
-      total: sortedItems.length,
-      filtered: filtered.length
-    });
-    
-    console.log(`[Filter] Applied filters. Showing ${filtered.length} of ${sortedItems.length} items.`);
-  }, [sortedItems, selectedMetadataTags, currentPath, navigateTo]);
-
-  // Add a function to recursively search for files based on metadata
-  const searchFilesRecursively = async (searchPath: string, metadataFilters: {category: string, tag: string}[]) => {
-    // Start loading state
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      console.log(`[Search] Starting metadata search at path: "${searchPath}" with filters:`, metadataFilters);
-      
-      // Create filter groups
-      const filtersByCategory = metadataFilters.reduce((acc, {category, tag}) => {
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(tag);
-        return acc;
-      }, {} as Record<string, string[]>);
-      
-      // Call the backend API with the search parameters
-      const searchResults = await fileSystemService.searchByMetadata(filtersByCategory);
-      
-      if (!searchResults || !Array.isArray(searchResults.items)) {
-        throw new Error('Search returned invalid results');
-      }
-      
-      // Process results
-      setFilteredItems(searchResults.items);
-      setIsFiltering(true);
-      setFilterStats({
-        total: searchResults.totalItems || searchResults.items.length,
-        filtered: searchResults.items.length
-      });
-      
-      console.log(`[Search] Found ${searchResults.items.length} matching items`);
-      
-    } catch (err: any) {
-      console.error('[Search] Error during metadata search:', err);
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-      notifyError(`Search failed: ${message}`);
-      setFilteredItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add a button to trigger search in the handleMetadataTagSelect function
-  const handleMetadataTagSelect = (category: string, tag: string) => {
-    // Check if this is a directory structure category
-    const isDirectoryCategory = DIRECTORY_STRUCTURE_CATEGORIES.includes(category);
-    
-    // Check if tag is already selected
-    const isSelected = selectedMetadataTags.some(item => 
-        item.category === category && item.tag === tag
-    );
-    
-    if (isSelected) {
-        // Just remove the tag if it's already selected
-        setSelectedMetadataTags(prev => 
-            prev.filter(item => !(item.category === category && item.tag === tag))
-        );
-        return;
-    }
-    
-    // For directory structure filters, we might want to do direct navigation
-    if (isDirectoryCategory && selectedMetadataTags.length === 0) {
-        // If it's a collection or top-level category, try direct navigation
-        if (category === 'collection') {
-            navigateTo(tag);
-            // Still add it to the filters for visual indication
-            setSelectedMetadataTags([{ category, tag }]);
-            return;
-        }
-    }
-    
-    // Default behavior: toggle the tag in filters
-    setSelectedMetadataTags(prev => {
-        // If selecting a directory category, remove others of the same category
-        if (isDirectoryCategory) {
-            // Remove other tags in the same category
-            const withoutSameCategory = prev.filter(item => item.category !== category);
-            return [...withoutSameCategory, { category, tag }];
-        }
-        // Normal multi-select for non-directory categories
-        return [...prev, { category, tag }];
-    });
-    
-    // If we're using metadata filter mode, search immediately
-    if (isMetadataFilterMode) {
-        // We'll activate this when the new fileSystemService.searchByMetadata API is available
-        // searchFilesRecursively(currentPath, [...selectedMetadataTags, { category, tag }]);
-    }
-  };
-
-  // Add a toggle for enabling deep metadata search
-  const toggleMetadataFilterMode = () => {
-    setIsMetadataFilterMode(prev => !prev);
-    
-    // When enabling, perform search immediately if tags are selected
-    if (!isMetadataFilterMode && selectedMetadataTags.length > 0) {
-      // We'll activate this when the new fileSystemService.searchByMetadata API is available
-      // searchFilesRecursively(currentPath, selectedMetadataTags);
-    }
-    
-    // When disabling, clear filters
-    if (isMetadataFilterMode) {
-      handleClearFilters();
-    }
-  };
-
-  // Add a function to clear all applied filters
-  const handleClearFilters = () => {
-    setSelectedMetadataTags([]);
-    
-    // Now this line will work because we have the state defined
-    setIsMetadataFilterMode(false);
-  };
 
   // --- NEW: Handler for single item download button ---
   const handleDownloadSingle = async (item: BlobItem) => {
@@ -1518,64 +1244,23 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
   // --- END NEW ---
 
   // Add this navigation function to BasicFileSystem component
-  const navigateToPath = (navigatePath: string) => {
-    console.log(`BasicFileSystem: Navigation requested to path: "${navigatePath}"`);
-    
-    // Ensure path is a string and normalize it (remove any starting/trailing slashes, replace backslashes)
-    const normalizedPath = String(navigatePath || '')
-      .trim()
-      .replace(/\\/g, '/')   // Convert Windows-style paths to forward slashes
-      .replace(/^\/+|\/+$/g, ''); // Remove leading/trailing slashes
-    
-    console.log(`BasicFileSystem: Normalized path for navigation: "${normalizedPath}"`);
-    
-    // Set the path directly
-    if (normalizedPath !== currentPath) {
-      setCurrentPath(normalizedPath);
-      console.log(`BasicFileSystem: Path state changed to: "${normalizedPath}"`);
-      
-      // Clear selections when navigating to a new path
-      setSelectedPaths(new Set());
-      
-      // Set a flag that this navigation was triggered programmatically
-      window.sessionStorage.setItem('programmaticNavigation', 'true');
-      window.sessionStorage.setItem('navigationTarget', normalizedPath);
-    } else {
-      console.log(`BasicFileSystem: Path already set to "${normalizedPath}", refreshing items`);
-      // If we're already at the path, trigger a refresh of the items
-      loadItems(normalizedPath);
-    }
+  const navigateToPath = (path: string) => {
+    console.log(`BasicFileSystem: BEFORE navigation - Current path: "${currentPath}"`);
+    console.log(`BasicFileSystem: Attempting to navigate to: "${path}"`);
+
+    // Ensure path is a string and normalize it
+    const normalizedPath = String(path || '').trim();
+
+    // Set the path directly to force a state change
+    setCurrentPath(normalizedPath);
+
+    // Log after state change (though React will batch this)
+    console.log(`BasicFileSystem: AFTER navigation - New path should be: "${normalizedPath}"`);
+
+    // Clear selections when changing directories
+    setSelectedPaths(new Set());
   };
 
-  // Expose methods to parent components
-  useImperativeHandle(ref, () => ({
-    triggerFileUpload: () => {
-      // Trigger the file input click programmatically
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
-      }
-    },
-    // Use the improved navigateToPath method
-    navigateToPath
-  }), [currentPath, loadItems]); // Add dependencies
-  
-  // Add effect to check for navigation completion
-  useEffect(() => {
-    // Check if this was a programmatic navigation
-    const wasNavigationTriggered = window.sessionStorage.getItem('programmaticNavigation') === 'true';
-    const targetPath = window.sessionStorage.getItem('navigationTarget');
-    
-    if (wasNavigationTriggered && targetPath && currentPath === targetPath && !isLoading) {
-      console.log(`BasicFileSystem: Navigation to "${targetPath}" completed successfully`);
-      // Clear the flags
-      window.sessionStorage.removeItem('programmaticNavigation');
-      window.sessionStorage.removeItem('navigationTarget');
-      
-      // Focus or highlight the directory/item if needed
-      // ...additional logic for highlighting the directory could go here...
-    }
-  }, [currentPath, isLoading]);
-  
   // New helper function to check if a single selected item is a directory
   const getIsSelectedItemDirectory = () => {
     if (selectedPaths.size !== 1) return false;
@@ -1640,10 +1325,26 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
     setIsMetadataModalOpen(true);
   };
 
+  // Handle metadata tag selection
+  const handleMetadataTagSelect = (category: string, tag: string) => {
+    setSelectedMetadataTags(prev => {
+      // Check if the tag is already selected
+      const isSelected = prev.some(item => item.category === category && item.tag === tag);
+      
+      if (isSelected) {
+        // Remove the tag if already selected
+        return prev.filter(item => !(item.category === category && item.tag === tag));
+      } else {
+        // Add the tag if not selected
+        return [...prev, { category, tag }];
+      }
+    });
+  };
+
   // --- Fix JSX Structure ---
   return (
-    <div className={styles.container} style={{ display: 'flex', height: '100%', overflow: 'hidden' }}> 
-      {/* Toast Container */}
+    <div className={styles.container}> {/* Main container with flex layout */}
+      {/* Add Toast Container */}
       <ToastContainer
         position="bottom-right"
         autoClose={4000}
@@ -1657,31 +1358,14 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
         theme="light"
       />
       
-      {/* Left sidebar with metadata filter - add fixed width constraint */}
-      <div style={{ 
-        width: '250px', 
-        minWidth: '250px', 
-        maxWidth: '250px',
-        height: '100%',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        borderRight: '1px solid #ddd',
-        backgroundColor: '#f5f5f5'
-      }}>
-        <MetadataFilterBar
-          onTagSelect={handleMetadataTagSelect}
-          selectedTags={selectedMetadataTags}
-        />
-      </div>
+      {/* Left sidebar with metadata filter */}
+      <MetadataFilterBar
+        onTagSelect={handleMetadataTagSelect}
+        selectedTags={selectedMetadataTags}
+      />
 
-      {/* Main content area - ensure it takes the remaining space */}
-      <div className={styles.mainContent} style={{ 
-        flex: 1,
-        minWidth: 0,
-        display: 'flex', 
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
+      {/* Main content area */}
+      <div className={styles.mainContent}>
        
 
         {/* --- Update Upload Section to use new trigger --- */}
@@ -1689,7 +1373,7 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
           isLoading={isLoading}
           uploading={uploading} // Keep using uploading state for general feedback
           onFileUpload={handleFileUploadTrigger} // Use the trigger function
-          fileInputRef={fileInputRef} // Pass the ref to the component
+          fileInputRef={fileInputRef} // Pass the ref to access the file input
         />
         {/* --- End Update --- */}
 
@@ -1719,34 +1403,18 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
 
         <StatusDisplay isLoading={isLoading} error={error} />
 
-        {/* Add filter stats banner when filtering is active */}
-        {isFiltering && (
-          <div className={styles.filterBanner}>
-            <div className={styles.filterStats}>
-              <FaFilter className={styles.filterIcon} />
-              <span>
-                Showing <span className={styles.badge}>{filterStats.filtered}</span> of <span className={styles.badge}>{filterStats.total}</span> items
-              </span>
-            </div>
-            <button 
-              className={styles.clearFiltersButton}
-              onClick={handleClearFilters}
-            >
-              <FaTimesCircle className={styles.clearIcon} />
-              Clear Filters
-            </button>
-          </div>
-        )}
-
         {!isLoading && !error && (
           <FileListDisplay
-            // Use filtered items instead of sortedItems directly
-            items={isFiltering ? filteredItems : sortedItems}
-            // ...rest of existing props remain unchanged...
+            // --- Pass sorted items ---
+            items={sortedItems}
+            // --- Pass sort state and handler ---
             sortKey={sortKey}
             sortDirection={sortDirection}
             onSort={handleSort}
+            // --- End Pass ---
+            // --- Pass missing isLoading prop ---
             isLoading={isLoading}
+            // --- End Pass ---
             onDelete={handleDeleteSingle}
             onItemDoubleClick={handleItemDoubleClick}
             selectedPaths={selectedPaths}
@@ -1767,10 +1435,14 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onSelectAll={handleSelectAll}
+            // --- Pass new download handler ---
             onDownload={handleDownloadSingle}
+            // --- FIX: Pass onEditMetadata prop ---
             onEditMetadata={handleEditMetadataForItem}
+            // --- End Pass ---
+            // --- Pass highlightedPath prop ---
             highlightedPath={highlightedPath}
-            isFiltering={isFiltering} // Pass filtering state to show visual indicators
+            // --- End Pass ---
           />
         )}
 

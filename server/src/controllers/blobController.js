@@ -495,7 +495,7 @@ export const uploadFile = async (req, res) => {
         containerName: containerName,
         blobName: blobName,
         startsOn: new Date(),
-        expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // 1 hour expiry
+        expiresOn: new Date(new Date().valueOf() + 3600*24*30*12 *1000), // 1 year expiry
         permissions: BlobSASPermissions.parse("r"), // Read-only permissions
       };
   
