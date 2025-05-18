@@ -517,7 +517,7 @@ export const uploadFile = async (req, res) => {
             // Embed by sentence for better granularity
             const sentences = text.split('.').map(s => s.trim()).filter(s => s.length > 0);
             for (const sentence of sentences) {
-                await embedAndStore(sentence, sasUrl);
+                await embedAndStore(sentence, documentId);
             }
             console.log(`[Server] /upload - Embedded and stored in Pinecone.`);
         } else {

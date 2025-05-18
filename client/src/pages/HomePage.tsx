@@ -75,9 +75,8 @@ const HomePage = () => {
     <main className="flex flex-col items-center text-center px-4 pt-20">
       {/* Animated Heading */}
       <header
-        className={`transform transition-all duration-700 ease-out ${
-          animateHeading ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        } flex flex-col items-center text-center`}
+        className={`transform transition-all duration-700 ease-out ${animateHeading ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          } flex flex-col items-center text-center`}
       >
         <h2 className="text-3xl md:text-5xl font-bold mb-3">
           Discover Historical Archives
@@ -87,29 +86,36 @@ const HomePage = () => {
         </p>
       </header>
 
-            {/* Chat Log Section */}
+      {/* Chat Log Section */}
       {results.length > 0 && (
         <section className="custom-scrollbar mt-10 w-full max-w-6xl h-96 overflow-y-auto bg-gray-900 p-4 rounded-md">
           {results.map((result, index) => (
             <div
               key={index}
-              className={`mb-4 p-4 rounded-3xl ${
-                result.isUser
+              className={`mb-4 p-4 rounded-3xl ${result.isUser
                   ? 'bg-blue-600 text-white self-end text-right ml-auto w-fit'
                   : 'bg-gray-800 text-white self-start text-left w-fit'
-              }`}
+                }`}
             >
-              <p className="text-lg">{result.text}</p>
-              {!result.isUser && result.link && (
-                <a
-                  href={result.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:underline mt-2 block"
-                >
-                  View File
-                </a>
+              <p className="text-lg">{result.isUser ? result.text : result.answer}</p>
+              {/* sasUrls is a vector, print all available links next to each other*/}
+              {!result.isUser && result.sasUrls && result.sasUrls.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {result.sasUrls.map((url: string, idx: number) => (
+                    <a
+                      key={idx}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:underline"
+                    >
+                      View File {idx + 1}
+                    </a>
+                  ))}
+                </div>
               )}
+              {/* If the result is not from the user and has a sasUrl, show it */}
+
             </div>
           ))}
         </section>
@@ -169,9 +175,8 @@ const HomePage = () => {
 
       {/* Popular Tags Section */}
       <section
-        className={`flex flex-wrap gap-4 justify-center max-w-2xl transition-all duration-700 ease-out ${
-          animateTags ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-        }`}
+        className={`flex flex-wrap gap-4 justify-center max-w-2xl transition-all duration-700 ease-out ${animateTags ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}
       >
         {['Children Rights', 'Health Care Laws', 'Laws for Education', 'Truth and Reconciliation Commission', 'Freedom Charter'].map((tag) => (
           <button

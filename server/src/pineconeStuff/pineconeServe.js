@@ -2,6 +2,9 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import dotenv from 'dotenv';
 import { extractFeatures } from './embed.js';
 import path from 'path';
+import generateSasTokenForDocument from './generateDocumentSas.js';
+import { getAnswer } from '../qapipeline/qanswer.js';
+import { all } from 'axios';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 
@@ -53,19 +56,41 @@ export async function queryPinecone(queryText) {
 
     // console.log("[Pinecone] Query response:", queryResponse);
 
-    // Process the response to extract text and file links
-    const results = queryResponse.matches.map(match => {
+    // Gather all context texts and SAS URLs
+    const matches = Array.isArray(queryResponse.matches) ? queryResponse.matches : [];
+    const allTexts = matches.map(match => (match.metadata && match.metadata.text) || '').join('\n\n');
+    const sasUrls = matches.map(match => {
         const metadata = match.metadata || {};
         return {
-            text: metadata.text || 'No text available', // Extracted text from metadata
-            link: metadata.filename, // Construct a link to the file
+            documentId: metadata.filename,
+            // We'll fill in sasUrl below
         };
     });
+
+
+        // Generate SAS URLs for each document
+    const sasUrlsWithLinks = await Promise.all(sasUrls.map(async (item) => {
+        const sasUrl = await generateSasTokenForDocument(item.documentId);
+        return {
+            sasUrl
+        };
+    }));
+
+        // Ask the question using the combined context
+    const answer = await getAnswer(queryText, allTexts);
 
     // console.log("[Pinecone] Processed results:", results);
 
     console.log("[Pinecone] Query completed.");
-    return results; // Return the processed results
+  // Return the answer and all SAS URLs
+    console.log("[Pinecone] Combined context-answer:", { allTexts, answer });
+
+    console.log("[Pinecone] Combined context-sasUrls:", [ ...new Set(sasUrlsWithLinks.map(item => item.sasUrl)) ]);
+    return [{
+        answer,
+        //only return unique sasUrls
+        sasUrls: [...new Set(sasUrlsWithLinks.map(item => item.sasUrl))]
+    }];
 }
 
 
