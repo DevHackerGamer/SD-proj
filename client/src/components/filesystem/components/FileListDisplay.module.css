@@ -1,0 +1,242 @@
+/* ... existing styles ... */
+
+.filterStatus {
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.filterActiveIndicator {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  border-left: 4px solid #1976d2;
+}
+
+.searchingIndicator {
+  background-color: #fff8e1;
+  color: #ff8f00;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  border-left: 4px solid #ffa000;
+}
+
+/* Improved empty folder message styling with guaranteed text contrast */
+.emptyFolderContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  width: 100%;
+  padding: 20px;
+}
+
+.emptyFolderContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 400px;
+  padding: 30px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.emptyFolderIcon {
+  font-size: 48px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.emptyFolderTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #334155; /* Dark slate blue - high contrast */
+  margin: 0 0 8px 0;
+}
+
+.emptyFolderDescription {
+  font-size: 16px;
+  color: #475569; /* Dark gray - high contrast */
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.emptyFolderDropHint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background-color: #e0f2fe;
+  border-radius: 8px;
+  color: #0369a1; /* Dark blue on light blue background */
+  font-weight: 500;
+  font-size: 15px;
+  border: 1px solid #bae6fd;
+  transition: all 0.2s ease;
+}
+
+.emptyFolderDropHint:hover {
+  background-color: #bae6fd;
+  transform: translateY(-2px);
+}
+
+.dropHintIcon {
+  font-size: 18px;
+}
+
+/* Improved Empty States */
+.emptyStateContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.emptyFolderState,
+.emptyFilterResults {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 400px;
+  padding: 30px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.emptyFilterResults {
+  border-color: #93c5fd;
+  background-color: #eff6ff; /* Light blue background */
+}
+
+.emptyStateIcon {
+  font-size: 48px;
+  color: #3b82f6; /* Medium blue color */
+  margin-bottom: 16px;
+}
+
+.emptyFilterResults .emptyStateIcon {
+  color: #3b82f6;
+}
+
+.emptyStateTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e3a8a; /* Very dark blue - excellent contrast */
+  margin: 0 0 8px 0;
+}
+
+.emptyStateDescription {
+  font-size: 16px;
+  color: #334155; /* Dark slate gray - excellent contrast */
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.dropFilesHint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background-color: #e0f2fe;
+  border-radius: 8px;
+  color: #0369a1; /* Dark blue text on light blue background */
+  font-weight: 500;
+  font-size: 15px;
+  border: 1px solid #bae6fd;
+  transition: all 0.2s ease;
+}
+
+.dropFilesHint:hover {
+  background-color: #bae6fd;
+  transform: translateY(-2px);
+}
+
+.uploadIcon {
+  font-size: 18px;
+}
+
+.clearFiltersButton {
+  padding: 10px 16px;
+  background-color: #3b82f6;
+  color: white; /* White on blue has excellent contrast */
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 14px;
+}
+
+.clearFiltersButton:hover {
+  background-color: #2563eb;
+}
+
+/* Filter active notification banner */
+.filterActiveBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background-color: #dbeafe; /* Light blue background */
+  border-left: 4px solid #3b82f6;
+  margin-bottom: 16px;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.filterActiveBanner .filterIcon {
+  color: #3b82f6;
+  font-size: 16px;
+}
+
+.filterActiveBanner span {
+  color: #1e40af; /* Dark blue text - excellent contrast */
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.clearFilterButton {
+  padding: 4px 12px;
+  background-color: #3b82f6;
+  color: white; /* White text on blue background - excellent contrast */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+/* Ensure scrollbar indicators have good contrast */
+.scrollMoreIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 4px;
+  font-size: 0.75rem;
+  color: #1e40af; /* Dark blue - good contrast */
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9) 20%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ... existing styles ... */

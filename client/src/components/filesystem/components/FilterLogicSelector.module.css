@@ -1,0 +1,112 @@
+.logicSelectorContainer {
+  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.logicSelectorLabel {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #505050;
+}
+
+.infoIcon {
+  margin-left: 5px;
+  color: #6b7280;
+  cursor: help;
+  font-size: 0.8rem;
+}
+
+.buttonGroup {
+  display: flex;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.logicButton {
+  flex: 1;
+  padding: 8px 12px;
+  background-color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+  color: #666;
+}
+
+.active {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.andButton.active {
+  background-color: #4f46e5; /* Indigo for AND */
+}
+
+.orButton.active {
+  background-color: #6366f1; /* Lighter purple/blue for OR - more consistent with theme */
+}
+
+.buttonDescription {
+  font-size: 0.75rem;
+  font-weight: normal;
+  display: block;
+  margin-top: 3px;
+  opacity: 0.9;
+}
+
+.tooltipContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+  width: 220px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+.tooltipContainer:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.exampleText {
+  font-style: italic;
+  margin-top: 3px;
+  font-size: 0.75rem;
+}

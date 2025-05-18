@@ -3,17 +3,56 @@
 
 # Node modules
 /node_modules/
+/**/node_modules/
 
-# Build artifacts and router cache
+# Build and output directories
 /build/
-/.react-router/
+/dist/
+/out/
+/tmp/
+/coverage/
+
+# React Router cache
+.react-router/
 
 # Environment variables
 .env
 .env.local
+.env.*.local
 
-# Visual Studio files
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs and editor folders
+.vscode/
+.idea/
 .vs/
 
-# Docker image archives (add this line)
+# TypeScript
+*.tsbuildinfo
+
+# Docker
 *.tar
+docker-compose.override.yml
+
+# OS-specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Misc
+*.log
+*.tgz
+
+# Optional: test coverage
+/.nyc_output/
+.coverage/
+
+# Optional: local certificates
+*.pem
+*.crt
+*.key

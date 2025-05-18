@@ -1,0 +1,197 @@
+{
+  "collection": [
+    "Constitutional_Development",
+    "Truth_and_Reconciliation_Commission",
+    "Judicial_History",
+    "Public_Participation",
+    "Pre-Apartheid_Legal_Systems",
+    "Post-Apartheid_Governance",
+    "Legislative_and_Justice_System_Records",
+    "Hello_word"
+  ],
+  "jurisdictionType": [
+    "National",
+    "Provincial",
+    "Traditional_Authorities",
+    "International"
+  ],
+  "jurisdictionName": {
+    "National": [
+      "South_Africa"
+    ],
+    "Provincial": [
+      "Gauteng",
+      "KZN",
+      "Eastern_Cape",
+      "Western_Cape",
+      "Limpopo",
+      "Mpumalanga",
+      "Free_State",
+      "Northern_Cape",
+      "North_West"
+    ],
+    "Traditional_Authorities": [
+      "Khoisan_Communities",
+      "Zulu_Kingdom"
+    ],
+    "International": [
+      "United_Nations"
+    ]
+  },
+  "thematicFocusPrimary": [
+    "Human_Rights",
+    "Land_Reform",
+    "Transitional_Justice",
+    "Constitutional_Drafting",
+    "Security_Laws"
+  ],
+  "thematicFocusSubthemes": {
+    "Human_Rights": [
+      "Bill_of_Rights",
+      "Socio-Economic_Rights",
+      "LGBTQ+_Protections"
+    ],
+    "Land_Reform": [
+      "Expropriation",
+      "Restitution",
+      "Section_25"
+    ],
+    "Transitional_Justice": [
+      "TRC_Testimonies",
+      "Amnesty_Hearings",
+      "Reparations"
+    ],
+    "Constitutional_Drafting": [
+      "Multi-Party_Negotiations",
+      "Public_Consultations",
+      "Finalization_Stages"
+    ],
+    "Security_Laws": [
+      "RICA",
+      "State_Surveillance"
+    ]
+  },
+  "issuingAuthorityType": [
+    "Political_Parties",
+    "Government_Bodies",
+    "Independent_Commissions",
+    "Civil_Society_Organizations",
+    "Individuals"
+  ],
+  "issuingAuthorityName": {
+    "Political_Parties": [
+      "ANC",
+      "DA",
+      "EFF",
+      "IFP",
+      "NFP"
+    ],
+    "Government_Bodies": [
+      "Constitutional_Court",
+      "Parliament",
+      "Department_of_Justice",
+      "Department_of_Land_Affairs"
+    ],
+    "Independent_Commissions": [
+      "TRC",
+      "Electoral_Commission",
+      "Human_Rights_Commission",
+      "Public_Protector_Office"
+    ],
+    "Civil_Society_Organizations": [
+      "COSATU",
+      "Section27",
+      "Law_Review_Project",
+      "Legal_Resource_Centre"
+    ],
+    "Individuals": [
+      "Albie_Sachs",
+      "Desmond_Tutu",
+      "Nelson_Mandela",
+      "Dullah_Omar"
+    ]
+  },
+  "documentFunction": [
+    "bill-draft",
+    "legal-revision",
+    "public-submission",
+    "consultation-record",
+    "parliamentary-debate",
+    "commission-report",
+    "government-gazette",
+    "amendment-bill",
+    "official-translation",
+    "Court_Judgement",
+    "Treaty_Agreement",
+    "Act",
+    "Research_Paper"
+  ],
+  "version": [
+    "v0_Preliminary",
+    "v1_internal_review",
+    "v2_Public_Feedback",
+    "v3_Revised_Draft",
+    "v4_Final_Draft"
+  ],
+  "workflowStagePrimary": [
+    "Creation",
+    "Approval",
+    "Post-Approval"
+  ],
+  "workflowStageSub": {
+    "Creation": [
+      "Draft",
+      "Submitted",
+      "Under_Review",
+      "public-comment",
+      "committee-debate"
+    ],
+    "Approval": [
+      "Committee_Approved",
+      "Certified",
+      "Enacted"
+    ],
+    "Post_Approval": [
+      "Archived",
+      "Repealed",
+      "Superseded"
+    ]
+  },
+  "language": [
+    "en",
+    "fr",
+    "af",
+    "zu",
+    "xh",
+    "ts",
+    "st",
+    "ve",
+    "tn",
+    "ss",
+    "nr",
+    "nso"
+  ],
+  "accessLevel": [
+    "public",
+    "restricted",
+    "admin-only"
+  ],
+  "fileType": [
+    "pdf",
+    "docx",
+    "txt",
+    "jpeg",
+    "png",
+    "mp3",
+    "mp4",
+    "wav",
+    "avi"
+  ],
+  "license": [
+    "Creative Commons BY-SA",
+    "Creative Commons BY-NC",
+    "Public Domain",
+    "Government Copyright",
+    "All Rights Reserved"
+  ]
+}
