@@ -3,8 +3,17 @@
 .container {
   display: flex;
   height: 100%;
-  overflow: hidden;
+  overflow: visible; /* Allow scrolling to propagate */
   position: relative;
+  position: relative;
+  display: flex;
+  height: auto !important; /* Let content determine height */
+  min-height: 80vh; /* Use viewport-relative height */
+  width: 100%;
+  overflow: visible; /* Allow content to scroll */
+  background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
 }
 
 .container h2 {
@@ -89,30 +98,83 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  height: 100%; /* Take full parent height */
+  min-height: 300px; /* Minimum height */
+  overflow: visible; /* Let child handle scrolling */
   position: relative;
   width: 100%;
-  max-width: 100%;
 }
 
-/* File list takes full height of its container */
+/* File list - IMPROVED ADAPTABILITY */
 .fileList {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
+  position: relative; 
+  flex: 1;
   width: 100%;
-  flex: 1 1 auto; /* Allow the file list to grow and shrink */
-  min-height: 70vh; /* Ensure it takes a large portion of the viewport height */
+  height: auto !important; /* Let content determine height */
+  min-height: 200px; /* Minimum height */
+  max-height: none !important; /* Remove height restriction */
+  overflow-y: auto !important; /* Use auto instead of scroll */
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0 5px 20px 5px; /* Reduced bottom padding */
   list-style: none;
-  max-width: 100%;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  
+  /* Improved scrollbar visibility */
+  scrollbar-width: auto !important;
+  scrollbar-color: #4a5568 #edf2f7 !important; /* Darker, more visible colors */
+}
+
+/* Enhanced scrollbar styling with MORE contrast */
+.fileList::-webkit-scrollbar {
+  width: 16px !important; /* Wider scrollbar */
+  height: 16px;
+  display: block !important; /* Force display */
+}
+
+.fileList::-webkit-scrollbar-track {
+  background: #edf2f7;
+  border-radius: 8px;
+}
+
+.fileList::-webkit-scrollbar-thumb {
+  background-color: #4a5568; /* Darker thumb for visibility */
+  border-radius: 8px;
+  border: 3px solid #edf2f7;
+  min-height: 40px;
+}
+
+.fileList::-webkit-scrollbar-thumb:hover {
+  background-color: #2d3748; /* Even darker on hover */
+}
+
+/* Scroll to top button */
+.scrollTopButton {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #4299e1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  opacity: 0.95;
+  border: none;
+  z-index: 1000;
+  font-size: 1.2rem;
+}
+
+.scrollTopButton:hover {
+  opacity: 1;
+  transform: translateY(-2px);
 }
 
 /* Base styles for both header and item rows */
@@ -133,6 +195,10 @@
   align-items: center; /* Vertically align items in the row */
   transform: translateZ(0); /* Enable hardware acceleration */
   transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  min-height: 36px; /* Minimum height per item */
+  width: 100%;
+  box-sizing: border-box; /* Include padding in width calculation */
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .fileItem:active {
@@ -225,6 +291,15 @@
   visibility: visible; /* Always visible */
 }
 
+.selectCheckboxPlaceholder { 
+  /* Ensure placeholder takes space but is hidden */
+  visibility: hidden;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
 .fileItem:last-child {
   border-bottom: none;
 }
@@ -257,6 +332,15 @@
   font-size: 1.1em; /* Slightly larger icon */
   flex-shrink: 0; /* Prevent icon from shrinking */
   transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.iconSpanPlaceholder { 
+  /* Provide space for icon alignment without displaying anything */
+  visibility: hidden;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .fileItem:hover .iconSpan {
@@ -2165,3 +2249,152 @@
   padding: 15px;
   box-sizing: border-box;
 }
+
+/* NLP Search Bar Styles */
+.nlpSearchContainer {
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.nlpSearchForm {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.searchInputWrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50px;
+  padding: 5px 15px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.searchInputWrapper.focused {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  border-color: white;
+}
+
+.searchIcon {
+  color: #6a11cb;
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.nlpSearchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  color: #333;
+  font-size: 16px;
+  width: 100%;
+  outline: none;
+}
+
+.nlpSearchInput::placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+.clearSearchButton {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.clearSearchButton:hover {
+  color: #555;
+}
+
+.voiceSearchButton {
+  background: none;
+  border: none;
+  color: #6a11cb;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voiceSearchButton:hover {
+  background-color: rgba(106, 17, 203, 0.1);
+}
+
+.voiceSearchButton.listening {
+  color: #e74c3c;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.searchButton {
+  background-color: white;
+  color: #6a11cb;
+  border: none;
+  border-radius: 50px;
+  padding: 12px 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.searchButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.searchButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.searchExamples {
+  margin-top: 12px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.searchExamples p {
+  margin: 0;
+}
+
+.searchExamples span {
+  cursor: pointer;
+  text-decoration: underline;
+  transition: opacity 0.2s;
+}
+
+.searchExamples span:hover {
+  opacity: 1;
+}
+
+/* ...other existing styles... */

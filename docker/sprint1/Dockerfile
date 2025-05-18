@@ -1,9 +1,14 @@
 # Stage 1: Build Stage (Install all dependencies, build client)
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 WORKDIR /app
 
-# Install OS build dependencies needed for some npm packages (like mssql)
-RUN apk add --no-cache python3 make g++ unixodbc-dev
+# Install OS build dependencies needed for ONNX Runtime and other packages
+RUN apt-get update && apt-get install -y \
+    python3 \
+    build-essential \
+    unixodbc-dev \
+    libgomp1 \
+    curl
 
 # Copy package files
 COPY ../../package.json ../../package-lock.json ./
@@ -33,23 +38,14 @@ COPY ../../server ./server
 COPY ../../shared ./shared
 
 # Run the build script defined in package.json
-# This should generate output in /app/build/client based on vite.config.ts
 RUN npm run build
 
-# --- Add this section for debugging ---
-# List the build output to verify structure
-RUN echo "--- Listing build output ---" && \
-    ls -l /app/build && \
-    ls -l /app/build/client && \
-    ls -l /app/build/client/assets || echo "--- Failed to list assets (maybe directory doesn't exist?) ---"
-# --- End debugging section ---
-
-# Stage 2: Production Stage (Install only production dependencies, copy build artifacts)
-FROM node:20-alpine AS runner
+# Stage 2: Production Stage
+FROM node:20-slim AS runner
 WORKDIR /app
 
-# Install only runtime OS dependencies (like unixodbc for mssql)
-RUN apk add --no-cache unixodbc
+# Install only runtime OS dependencies for ONNX Runtime
+RUN apt-get update && apt-get install -y  unixodbc libgomp1 ca-certificates
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
@@ -60,12 +56,6 @@ COPY ../../package.json ../../package-lock.json ./
 # Install only production dependencies
 RUN npm ci --omit=dev
 
-# --- Add this section for debugging Clerk versions ---
-RUN echo "--- [Runner] Checking Clerk versions ---" && \
-    npm ls @clerk/clerk-react || echo "--- [Runner] @clerk/clerk-react not found or ls failed ---" && \
-    npm ls @clerk/shared || echo "--- [Runner] @clerk/shared not found or ls failed ---"
-# --- End debugging section ---
-
 # Copy built client from the builder stage
 COPY --from=builder /app/build ./build
 
@@ -73,8 +63,7 @@ COPY --from=builder /app/build ./build
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
 
-# Expose the port the app runs on (server.js uses PORT or 5000)
-# Azure App Service will set the PORT environment variable automatically
+# Expose the port the app runs on
 EXPOSE 5000
 
 # Command to run the application

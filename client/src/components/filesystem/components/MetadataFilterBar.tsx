@@ -1,121 +1,41 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import styles from './MetadataFilterBar.module.css';
-import { motion, AnimatePresence } from 'framer-motion'; // Add framer-motion for animations
+import { motion, AnimatePresence } from 'framer-motion'; 
 import { 
   FaBook, FaLayerGroup, FaLanguage, FaTags, FaLock, 
   FaFile, FaGlobe, FaBalanceScale, FaCopyright, 
-  FaFolderOpen, FaChevronDown, FaChevronRight,
+  FaFolderOpen, FaChevronDown, FaChevronRight, FaChevronUp,
   FaBuilding, FaRegFileCode, FaCodeBranch, FaRocket, 
-  FaCalendarAlt, FaSearch, FaTimes, FaFilter
+  FaCalendarAlt, FaSearch, FaTimes, FaFilter, FaSlidersH
 } from 'react-icons/fa';
+
+// Import the metadata options directly from JSON file
+import metadataOptionsData from '../../../components/managefields/metadataOptions.json';
+
+// Import the new component
+import FilterLogicSelector from './FilterLogicSelector';
 
 // Define the metadata options type to support hierarchy
 interface MetadataOptionsType {
   [key: string]: string[] | Record<string, string[]>;
 }
 
-// Props for the component
+// Remove match threshold from props
 interface MetadataFilterBarProps {
   onTagSelect: (category: string, tag: string) => void;
   selectedTags: { category: string, tag: string }[];
   isMetadataFilterMode?: boolean;
   onToggleFilterMode?: () => void;
+  onClearFilters?: () => void;
+  filterLogic?: 'AND' | 'OR';
+  onFilterLogicChange?: (logic: 'AND' | 'OR') => void;
+  // Add new props for controlling expanded sections
+  expandedSections?: string[];
+  onSectionToggle?: (section: string) => void;
 }
 
-// Updated metadata options based on the new structure from MetadataModal
-const defaultMetadataOptions: MetadataOptionsType = {
-  // Collections
-  collection: [
-    "Constitutional_Development", 
-    "Truth_and_Reconciliation_Commission", 
-    "Judicial_History", 
-    "Public_Participation", 
-    "Pre-Apartheid_Legal_Systems", 
-    "Post-Apartheid_Governance", 
-    "Legislative_and_Justice_System_Records"
-  ],
-  
-  // Jurisdictions
-  jurisdictionType: [
-    "National", 
-    "Provincial", 
-    "Traditional_Authorities", 
-    "International"
-  ],
-  
-  // Use the hierarchical structure for jurisdictionName
-  jurisdictionName: {
-    National: ["South_Africa"],
-    Provincial: [
-        "Gauteng", "KZN", "Eastern_Cape", "Western_Cape", 
-        "Limpopo", "Mpumalanga", "Free_State", "Northern_Cape", "North_West"
-    ],
-    Traditional_Authorities: ["Khoisan_Communities", "Zulu_Kingdom"],
-    International: ["United_Nations"]
-  },
-  
-  // Thematic Focus - Split into primary and subthemes
-  thematicFocusPrimary: [
-    "Human_Rights", 
-    "Land_Reform", 
-    "Transitional_Justice", 
-    "Constitutional_Drafting", 
-    "Security_Laws"
-  ],
-  
-  // Hierarchical subthemes based on primary theme
-  thematicFocusSubthemes: {
-    Human_Rights: ["Bill_of_Rights", "Socio-Economic_Rights", "LGBTQ+_Protections"],
-    Land_Reform: ["Expropriation", "Restitution", "Section_25"],
-    Transitional_Justice: ["TRC_Testimonies", "Amnesty_Hearings", "Reparations"],
-    Constitutional_Drafting: ["Multi-Party_Negotiations", "Public_Consultations", "Finalization_Stages"],
-    Security_Laws: ["RICA", "State_Surveillance"]
-  },
-  
-  // Issuing Authority - Split for filtering
-  issuingAuthorityType: [
-    "Political_Parties", "Government_Bodies", "Independent_Commissions", 
-    "Civil_Society_Organizations", "Individuals"
-  ],
-  issuingAuthorityName: { // Keep hierarchical for potential future use, flatten for now
-    Political_Parties: ["ANC", "DA", "EFF", "IFP", "NFP"],
-    Government_Bodies: ["Constitutional_Court", "Parliament", "Department_of_Justice", "Department_of_Land_Affairs"],
-    Independent_Commissions: ["TRC", "Electoral_Commission", "Human_Rights_Commission", "Public_Protector_Office"],
-    Civil_Society_Organizations: ["COSATU", "Section27", "Law_Review_Project", "Legal_Resource_Centre"],
-    Individuals: ["Albie_Sachs", "Desmond_Tutu", "Nelson_Mandela", "Dullah_Omar"]
-  },
-  
-  // Document Function
-  documentFunction: [
-    "bill-draft", "legal-revision", "public-submission", "consultation-record", 
-    "parliamentary-debate", "commission-report", "government-gazette", 
-    "amendment-bill", "official-translation", "Court_Judgement", 
-    "Treaty_Agreement", "Act", "Research_Paper"
-  ],
-  
-  // Version
-  version: [
-    "v0_Preliminary", "v1_internal_review", "v2_Public_Feedback", 
-    "v3_Revised_Draft", "v4_Final_Draft"
-  ],
-  
-  // Workflow Stage - Split for filtering
-  workflowStagePrimary: [
-    "Creation", "Approval", "Post-Approval"
-  ],
-  workflowStageSub: { // Keep hierarchical, flatten for filter bar display
-    Creation: ["Draft", "Submitted", "Under_Review", "public-comment", "committee-debate"],
-    Approval: ["Committee_Approved", "Certified", "Enacted"],
-    Post_Approval: ["Archived", "Repealed", "Superseded"]
-  },
-  
-  // Legacy fields
-  language: ["en", "fr", "af", "zu", "xh", "ts", "st", "ve", "tn", "ss", "nr", "nso"],
-  accessLevel: ["public", "restricted", "admin-only"],
-  fileType: ["pdf", "docx", "txt", "jpeg", "png", "mp3", "mp4", "wav", "avi"],
-  license: ["Creative Commons BY-SA", "Creative Commons BY-NC", "Public Domain", "Government Copyright", "All Rights Reserved"],
-  tags: [] // Assuming general tags are managed separately or added dynamically
-};
+// Initialize directly with the JSON data
+const defaultMetadataOptions: MetadataOptionsType = metadataOptionsData as MetadataOptionsType;
 
 // Updated category metadata for UI presentation
 const categoryMetadata = [
@@ -143,10 +63,20 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
   onTagSelect, 
   selectedTags,
   isMetadataFilterMode = false,
-  onToggleFilterMode
+  onToggleFilterMode,
+  onClearFilters,
+  filterLogic = 'AND',
+  onFilterLogicChange,
+  // Add new props with defaults
+  expandedSections = [],
+  onSectionToggle = () => {}
 }) => {
-  // State for managing the metadata options (loaded from default for now)
-  const [metadataOptions, setMetadataOptions] = useState<MetadataOptionsType>(defaultMetadataOptions);
+  // State for managing the metadata options - set DIRECTLY from the imported JSON
+  const [metadataOptions] = useState<MetadataOptionsType>(defaultMetadataOptions);
+  
+  // Remove loading states since we're not fetching from API
+  // const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(false);
+  // const [loadError, setLoadError] = useState<string | null>(null);
   
   // State for managing expanded categories
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
@@ -162,6 +92,86 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
   // Track pre-search expanded state to restore after clearing search
   const [preSearchExpandedState, setPreSearchExpandedState] = useState<string[]>([]);
   
+  // Add a reference to the scrollable container
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Add a function to scroll to top
+  const scrollToTop = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Add state to track if we're scrolled down enough to show the button
+  const [showScrollTopButton, setShowScrollTopButton] = useState(false);
+
+  // Add a scroll event handler to track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollContainerRef.current) {
+        const { scrollTop } = scrollContainerRef.current;
+        setShowScrollTopButton(scrollTop > 200);
+      }
+    };
+
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+  // Add a function to check if content is fully visible
+  useEffect(() => {
+    // Check if scrollable content overflows after component mounts
+    const checkScrollOverflow = () => {
+      if (scrollContainerRef.current) {
+        const { scrollHeight, clientHeight } = scrollContainerRef.current;
+        if (scrollHeight > clientHeight) {
+          // If content overflows, show the scroll button even initially
+          setShowScrollTopButton(true);
+          // Apply classes to ensure proper scrolling 
+          scrollContainerRef.current.classList.add(styles.hasOverflow);
+        }
+      }
+    };
+
+    // Run on mount and window resize
+    checkScrollOverflow();
+    window.addEventListener('resize', checkScrollOverflow);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScrollOverflow);
+  }, []);
+
+  // Update the scroll event handler to also check scroll position bottom
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+        
+        // Show button when scrolled down OR when content overflows
+        setShowScrollTopButton(scrollTop > 100 || scrollHeight > clientHeight);
+        
+        // Check if we're near the bottom
+        const isNearBottom = scrollTop + clientHeight >= scrollHeight - 50;
+        if (isNearBottom) {
+          // We could add visual feedback here
+          console.log("Near bottom of filter list");
+        }
+      }
+    };
+
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll);
+      return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
   // Helper to check if a category is hierarchical
   const isHierarchical = (categoryId: string): boolean => {
     // Check if the entry in defaultMetadataOptions exists and is an object but not an array
@@ -178,16 +188,85 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
     );
   };
 
-  // Handle tag click
-  const handleTagClick = (category: string, tag: string) => {
-    if (onTagSelect) {
-      onTagSelect(category, tag);
-    }
+  // Enhanced function to normalize strings for comparison (handles underscores vs spaces)
+  const normalizeString = (str: string): string => {
+    return str.toLowerCase()
+      .replace(/_/g, ' ')  // Replace underscores with spaces
+      .replace(/\s+/g, ' ') // Normalize multiple spaces
+      .trim();
   };
 
-  // Check if a tag is selected
+  // Improved tag matching function
   const isTagSelected = (category: string, tag: string) => {
-    return selectedTags.some(item => item.category === category && item.tag === tag);
+    const normalizedTag = normalizeString(tag);
+    return selectedTags.some(item => {
+      const itemCategory = normalizeString(item.category);
+      const itemTag = normalizeString(item.tag);
+      
+      // Direct category match
+      if (normalizeString(category) === itemCategory) {
+        return normalizedTag === itemTag;
+      }
+      
+      // Handle mappings for special cases (nested structure)
+      if (category === 'issuingAuthorityType' && itemCategory === 'issuingauthority_type') {
+        return normalizedTag === itemTag;
+      }
+      
+      if (category === 'issuingAuthorityName' && itemCategory === 'issuingauthority_name') {
+        return normalizedTag === itemTag;
+      }
+      
+      if (category === 'workflowStagePrimary' && itemCategory === 'workflowstage_primary') {
+        return normalizedTag === itemTag;
+      }
+      
+      if (category === 'workflowStageSub' && itemCategory === 'workflowstage_sub') {
+        return normalizedTag === itemTag;
+      }
+      
+      if (category === 'thematicFocusPrimary' && itemCategory === 'thematicfocus_primary') {
+        return normalizedTag === itemTag;
+      }
+      
+      if (category === 'thematicFocusSubthemes' && itemCategory === 'thematicfocus_subthemes') {
+        return normalizedTag === itemTag;
+      }
+      
+      return false;
+    });
+  };
+
+  // Improved tag click handler to normalize category mapping
+  const handleTagClick = (category: string, tag: string) => {
+    if (onTagSelect) {
+      // Map the UI category to the server-side expected category
+      let serverCategory = category;
+      
+      // Handle mappings for special cases (nested structure)
+      if (category === 'issuingAuthorityType') {
+        serverCategory = 'issuingauthority_type';
+      } else if (category === 'issuingAuthorityName') {
+        serverCategory = 'issuingauthority_name';
+      } else if (category === 'workflowStagePrimary') {
+        serverCategory = 'workflowstage_primary';
+      } else if (category === 'workflowStageSub') {
+        serverCategory = 'workflowstage_sub';
+      } else if (category === 'thematicFocusPrimary') {
+        serverCategory = 'thematicfocus_primary';
+      } else if (category === 'thematicFocusSubthemes') {
+        serverCategory = 'thematicfocus_subthemes';
+      } else if (category === 'jurisdictionType') {
+        serverCategory = 'jurisdiction_type';
+      } else if (category === 'jurisdictionName') {
+        serverCategory = 'jurisdiction_name';
+      } else if (category === 'documentFunction') {
+        serverCategory = 'documentfunction';
+      }
+      
+      console.log(`[Filter] Mapping UI category "${category}" to server category "${serverCategory}"`);
+      onTagSelect(serverCategory, tag);
+    }
   };
 
   // Helper to get all available tags for a category, handling hierarchical data
@@ -197,7 +276,7 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
       return options;
     } else if (typeof options === 'object' && options !== null) {
       // For hierarchical data, flatten the values for the filter bar
-      return Object.values(options).flat().filter(tag => typeof tag === 'string') as string[];
+      return Object.values(options).flat().filter((tag): tag is string => typeof tag === 'string');
     }
     return [];
   };
@@ -220,11 +299,11 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
       return;
     }
     
-    // Search all categories and tags
+    // Search all categories and tags with normalized comparison
     const results = categoryMetadata.map(category => {
       const tagsForCategory = getTagsForCategory(category.id);
-      const matchingTags = tagsForCategory.filter(tag => 
-        tag.toLowerCase().replace(/_/g, ' ').includes(term)
+      const matchingTags = tagsForCategory.filter((tag: string) => 
+        normalizeString(tag).includes(normalizeString(term))
       );
       
       return {
@@ -248,7 +327,7 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
     // Restore the pre-search expanded state
     setExpandedCategories(preSearchExpandedState);
     if (searchInputRef.current) {
-      searchInputRef.current.focus();
+      searchInputRef.current.focus(); // Fixed typo: was searchInputRefRef
     }
   };
   
@@ -280,9 +359,17 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
           <span>Active Filters</span>
           <button 
             className={styles.clearAllButton}
-            onClick={() => selectedTags.forEach(tag => 
-              handleTagClick(tag.category, tag.tag)
-            )}
+            onClick={() => {
+              // Call the onClearFilters prop if provided
+              if (onClearFilters) {
+                onClearFilters();
+              } else {
+                // Fall back to the previous behavior
+                selectedTags.forEach(tag => 
+                  handleTagClick(tag.category, tag.tag)
+                );
+              }
+            }}
           >
             Clear All
           </button>
@@ -355,7 +442,13 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
         <p>Try using fewer filters or different combinations.</p>
         <button
           className={styles.clearAllFiltersButton}
-          onClick={() => selectedTags.forEach(tag => handleTagClick(tag.category, tag.tag))}
+          onClick={() => {
+            if (onClearFilters) {
+              onClearFilters();
+            } else {
+              selectedTags.forEach(tag => handleTagClick(tag.category, tag.tag));
+            }
+          }}
         >
           Clear All Filters
         </button>
@@ -363,38 +456,66 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
     );
   };
 
+  // Log metadata to help debug
+  useEffect(() => {
+    console.log('Using metadata options from JSON file:', metadataOptionsData);
+    // Log specific categories to check if they have data
+    console.log('Collections:', metadataOptionsData.collection);
+    console.log('Document Functions:', metadataOptionsData.documentFunction);
+    
+    const categoryCounts = Object.entries(metadataOptions).reduce((acc, [key, value]) => {
+      const count = Array.isArray(value) 
+        ? value.length 
+        : Object.values(value as Record<string, string[]>).flat().length;
+      return { ...acc, [key]: count };
+    }, {});
+    
+    console.log('Metadata option counts:', categoryCounts);
+  }, []);
+
+  // Add state to track if a tag container needs scrolling
+  const [tagContainersWithOverflow, setTagContainersWithOverflow] = useState<Record<string, boolean>>({});
+  
+  // Ref to track tag containers for overflow detection
+  const tagContainerRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Check for tag container overflow when expanded categories change
+  useEffect(() => {
+    // Wait for animation to complete
+    const timer = setTimeout(() => {
+      const newOverflowState: Record<string, boolean> = {};
+      
+      expandedCategories.forEach(categoryId => {
+        const container = tagContainerRefs.current[categoryId];
+        if (container) {
+          newOverflowState[categoryId] = container.scrollHeight > container.clientHeight;
+        }
+      });
+      
+      setTagContainersWithOverflow(newOverflowState);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [expandedCategories]);
+
+  // Replace the toggleSection function to use the parent callback
+  const toggleSection = (section: string) => {
+    onSectionToggle(section);
+  };
+  
+  // Use the expandedSections prop to determine if a section is expanded
+  const isSectionExpanded = (section: string) => {
+    return expandedSections.includes(section);
+  };
+
+  // Update the return JSX to wrap categoriesContainer in a scrollView
   return (
     <div className={styles.filterSidebar}>
+      {/* Compact header with title and search combined */}
       <div className={styles.filterHeader}>
-        <h3>Filter Files</h3>
+        <h3 className={styles.filterTitle}>Metadata Filters</h3>
         
-        {/* Add toggle for deep metadata search */}
-        {onToggleFilterMode && (
-          <div className={styles.deepSearchToggle}>
-            <label>
-              <input 
-                type="checkbox" 
-                checked={isMetadataFilterMode} 
-                onChange={onToggleFilterMode}
-              />
-              Deep Metadata Search
-            </label>
-            <small>Search across all directories</small>
-          </div>
-        )}
-      </div>
-      
-      {/* Metadata search mode explanation */}
-      {isMetadataFilterMode && (
-        <div className={styles.searchModeExplanation}>
-          <p>Searching across all files. Select tags to find matching files regardless of their location.</p>
-        </div>
-      )}
-      
-      <div className={styles.sidebarHeader}>
-        <h3 className={styles.sidebarTitle}>Metadata Filters</h3>
-        
-        {/* Search input with black text */}
+        {/* Move search input closer to title */}
         <div className={styles.searchContainer}>
           <FaSearch className={styles.searchIcon} />
           <input
@@ -404,7 +525,6 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
             value={searchTerm}
             onChange={handleSearch}
             className={styles.searchInput}
-            style={{ color: '#000' }} /* Force black text */
           />
           {searchTerm && (
             <button 
@@ -418,6 +538,21 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
         </div>
       </div>
       
+      {/* Add this inside your MetadataFilterBar component, just below the header */}
+      <div className={styles.filterControls}>
+        {selectedTags.length > 0 && (
+          <FilterLogicSelector 
+            filterLogic={filterLogic}
+            onChange={(logic: 'AND' | 'OR') => {
+              if (onFilterLogicChange) {
+                onFilterLogicChange(logic);
+              }
+            }}
+            disabled={selectedTags.length <= 1}
+          />
+        )}
+      </div>
+
       {/* Render active filters section */}
       {renderActiveFilters()}
       
@@ -464,76 +599,106 @@ const MetadataFilterBar: React.FC<MetadataFilterBarProps> = ({
         </div>
       )}
       
-      {/* Only show categories if not searching or if search is empty */}
+      {/* Only show categories if not searching or if search is empty - NOW WITH SCROLL CONTAINER */}
       {(!searchTerm) && (
-        <div className={styles.categoriesContainer}>
-          {categoryMetadata.map(category => {
-            const tagsForCategory = getTagsForCategory(category.id);
-            const activeTags = selectedTags.filter(t => t.category === category.id).length;
-            const isDirectoryCategory = isDirectoryStructureCategory(category.id);
-            
-            return (
-              <motion.div 
-                key={category.id} 
-                className={`${styles.categorySection} ${isDirectoryCategory ? styles.directoryCategory : styles.metadataCategory}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div 
-                  className={`${styles.categoryHeader} ${activeTags > 0 ? styles.activeCategory : ''}`}
-                  onClick={() => toggleCategory(category.id)}
+        <div className={styles.categoriesScrollView} ref={scrollContainerRef}>
+          <div className={styles.categoriesContainer}>
+            {categoryMetadata.map(category => {
+              const tagsForCategory = getTagsForCategory(category.id);
+              const activeTags = selectedTags.filter(t => t.category === category.id).length;
+              const isDirectoryCategory = isDirectoryStructureCategory(category.id);
+              const hasOverflow = tagContainersWithOverflow[category.id];
+              
+              return (
+                <motion.div 
+                  key={category.id} 
+                  className={`${styles.categorySection} ${isDirectoryCategory ? styles.directoryCategory : styles.metadataCategory}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <span className={styles.categoryIcon}>{category.icon}</span>
-                  <span className={styles.categoryLabel}>
-                    {category.label}
-                    {isDirectoryCategory && (
-                      <span className={styles.directoryBadge} title="Navigation filter">🧭</span>
-                    )}
-                    {activeTags > 0 && (
-                      <span className={styles.activeBadge}>{activeTags}</span>
-                    )}
-                  </span>
-                  <span className={styles.expandIcon}>
-                    {expandedCategories.includes(category.id) ? <FaChevronDown /> : <FaChevronRight />}
-                  </span>
-                </div>
-                
-                <AnimatePresence>
-                  {expandedCategories.includes(category.id) && (
-                    <motion.div 
-                      className={styles.tagsContainer}
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      style={{ 
-                        maxHeight: '300px', 
-                        overflowY: 'auto',
-                        overflowX: 'hidden'
-                      }}
-                    >
-                      {tagsForCategory.map((tag) => ( 
-                        <motion.div 
-                          key={`${category.id}-${tag}`} 
-                          className={`${styles.tagItem} ${isTagSelected(category.id, tag) ? styles.selected : ''}`}
-                          onClick={() => handleTagClick(category.id, tag)}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <span className={styles.tagText}>{tag.replace(/_/g, ' ')}</span>
-                        </motion.div>
-                      ))}
-                      {tagsForCategory.length === 0 && (
-                        <div className={styles.emptyTagsMessage}>
-                          No {category.label.toLowerCase()} options defined.
-                        </div>
+                  <div 
+                    className={`${styles.categoryHeader} ${activeTags > 0 ? styles.activeCategory : ''}`}
+                    onClick={() => toggleSection(category.id)}
+                  >
+                    <span className={styles.categoryIcon}>{category.icon}</span>
+                    <span className={styles.categoryLabel}>
+                      {category.label}
+                      {isDirectoryCategory && (
+                        <span className={styles.directoryBadge} title="Navigation filter">🧭</span>
                       )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
+                      {activeTags > 0 && (
+                        <span className={styles.activeBadge}>{activeTags}</span>
+                      )}
+                    </span>
+                    <span className={styles.expandIcon}>
+                      {isSectionExpanded(category.id) ? <FaChevronDown /> : <FaChevronRight />}
+                    </span>
+                  </div>
+                  
+                  <AnimatePresence>
+                    {isSectionExpanded(category.id) && (
+                      <motion.div 
+                        className={styles.tagsContainer}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ 
+                          opacity: 1, 
+                          height: 'auto', 
+                          maxHeight: '300px' 
+                        }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {tagsForCategory.length > 0 ? (
+                          <div 
+                            className={`${styles.tagItems} ${hasOverflow ? styles.hasScrollIndicator : ''}`}
+                            ref={(el: HTMLDivElement | null) => {
+                              tagContainerRefs.current[category.id] = el;
+                            }}
+                          >
+                            {tagsForCategory.map((tag: string) => ( 
+                              <motion.div 
+                                key={`${category.id}-${tag}`} 
+                                className={`${styles.tagItem} ${isTagSelected(category.id, tag) ? styles.selected : ''}`}
+                                onClick={() => handleTagClick(category.id, tag)}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <span className={styles.tagText}>{tag.replace(/_/g, ' ')}</span>
+                              </motion.div>
+                            ))}
+                            
+                            {/* Add indicator for scrolling if needed */}
+                            {hasOverflow && (
+                              <div className={styles.scrollMoreIndicator}>
+                                <FaChevronDown />
+                                <span>Scroll for more</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className={styles.emptyTagsMessage}>
+                            No {category.label.toLowerCase()} options defined.
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
+          </div>
+          
+          {/* Scroll to top button - only visible when scrolled down */}
+          {showScrollTopButton && (
+            <button 
+              className={styles.scrollTopButton}
+              onClick={scrollToTop}
+              title="Scroll to top"
+            >
+              <FaChevronUp />
+            </button>
+          )}
         </div>
       )}
     </div>

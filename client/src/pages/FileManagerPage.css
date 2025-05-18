@@ -5,6 +5,9 @@
   display: flex;
   flex-direction: column;
   background-color: #f5f5f5;
+  /* Ensure content is always accessible */
+  overflow-y: auto;
+  position: relative;
 }
 
 .atom-global-header {
@@ -66,6 +69,38 @@
   flex: 1;
   background-color: #f5f5f5;
   padding: 20px;
+  /* Fix scrolling behavior */
+  overflow-y: auto;
+  position: relative;
+  /* Remove fixed height to allow natural content flow */
+  min-height: 400px;
+  /* Ensure content doesn't get cut off at the bottom */
+  padding-bottom: 40px;
+  /* Improved scrollbar styling */
+  scrollbar-width: auto;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}
+
+/* WebKit scrollbar styling for main content */
+.atom-main-content::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.atom-main-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.atom-main-content::-webkit-scrollbar-thumb {
+  background-color: #94a3b8;
+  border-radius: 8px;
+  border: 3px solid #f1f5f9;
+  min-height: 40px; /* Ensure the thumb is visible */
+}
+
+.atom-main-content::-webkit-scrollbar-thumb:hover {
+  background-color: #64748b; /* Darker on hover */
 }
 
 .atom-auth-required {
@@ -99,7 +134,11 @@
   color: white;
   padding: 1.5rem 2rem;
   font-size: 0.9rem;
-  margin-top: auto;
+  position: relative;
+  width: 100%;
+  /* Changed from margin-top: auto to ensure it doesn't cause overflow */
+  margin-top: 20px;
+  z-index: 10;
 }
 
 .atom-footer-content {
@@ -112,4 +151,12 @@
   color: #1abc9c;
   text-decoration: none;
   margin: 0 0.5rem;
+}
+
+/* Style parent containers to ensure they allow scrolling */
+html, body {
+  overflow-y: auto;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
