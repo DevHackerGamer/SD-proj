@@ -1,13 +1,696 @@
-.filterBarContainer {
+/* Main container - FIXED for proper scrolling and visibility */
+.filterSidebar {
   width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  height: 100%; /* Changed from 100vh for better integration */
   background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  position: relative;
+  /* Don't hide overflow, let content be visible */
+  overflow: visible;
+  /* Ensure the sidebar is above other elements */
+  z-index: 10;
+}
+
+/* Custom scrollbar styling */
+.filterSidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.filterSidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filterSidebar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 4px;
+  border: 2px solid #f8f9fa;
+}
+
+/* Improved filter header with AND/OR toggle */
+.filterHeader {
+  padding: 12px;
+  background-color: #f7f9fc;
+  border-bottom: 1px solid #e2e8f0;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filterHeaderTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.filterTitle {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #2d3748;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Filter logic toggle styling */
+.filterLogicToggle {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 5px;
+  background-color: #edf2f7;
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filterLogicOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+  /* More contrast for better visibility */
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.filterLogicOption input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.filterLogicOption span {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+.filterLogicOption small {
+  font-size: 0.7rem;
+  color: #718096;
+  margin-top: 2px;
+}
+
+.filterLogicOption.active {
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filterLogicOption.active span {
+  color: #3182ce;
+}
+
+/* Search input styling */
+.searchContainer {
+  position: relative;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 10px 8px 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+  color: #2d3748;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 1px #3182ce;
+}
+
+/* Improved tag container styling to prevent layout shifts */
+.tagsContainer {
+  max-height: 150px;
   overflow-y: auto;
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 transparent;
+  transition: height 0.2s ease;
+  /* Ensure tags container doesn't collapse */
+  min-height: 40px;
+}
+
+/* Custom scrollbar for tags */
+.tagsContainer::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tagsContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tagsContainer::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 3px;
+}
+
+/* Tag items in a wrapping layout */
+.tagItem {
+  display: inline-flex;
+  align-items: center;
+  margin: 3px;
+  padding: 5px 10px; /* More padding for better text visibility */
+  background-color: #edf2f7;
+  color: #4a5568;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  /* Ensure text is visible */
+  max-width: 230px; /* Narrower than container to account for margins */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Better contrast */
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tagItem:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.tagItem.selected {
+  background-color: #3182ce;
+  color: white;
+  font-weight: 500; /* Slightly bolder for better visibility */
+}
+
+/* Main container styles with proper scrolling */
+.filterSidebar {
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  height: 100%;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto; /* Enable scrolling for the entire sidebar */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8f9fa;
+}
+
+/* Custom scrollbar styling */
+.filterSidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.filterSidebar::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.filterSidebar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 4px;
+  border: 2px solid #f8f9fa;
+}
+
+/* Fixed header that stays at the top */
+.filterHeader {
+  padding: 12px;
+  background-color: #f7f9fc;
+  border-bottom: 1px solid #e2e8f0;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filterHeader h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+  color: #2d3748;
+}
+
+/* Search bar section that stays fixed below header */
+.sidebarHeader {
+  padding: 10px 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 60px; /* Position below the filter header */
+  z-index: 19;
+  flex-shrink: 0;
+}
+
+/* MAJOR FIX - Make the categoriesScrollView take remaining height and scroll properly */
+.categoriesScrollView {
+  flex: 1;
+  overflow-y: auto !important; /* Force scrolling */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8f9fa;
+  position: relative;
+  margin-bottom: 0;
+  /* Keep height calculation simple */
+  height: calc(100% - 150px); /* Adjust based on header heights */
+  /* Ensure content is visible */
+  padding-bottom: 150px !important;
+  /* Add a border to show where the scrollable area ends */
+  border-bottom: 2px dashed #e2e8f0;
+}
+
+/* Custom scrollbar for categories container */
+.categoriesScrollView::-webkit-scrollbar {
+  width: 6px;
+}
+
+.categoriesScrollView::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.categoriesScrollView::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 4px;
+  border: 1px solid #f8f9fa;
+}
+
+/* Ensure the container fills the scrollable area */
+.categoriesContainer {
+  padding: 10px 15px 200px 15px; /* Much more bottom padding */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  /* Add visual indicator for bottom of content */
+  position: relative;
+}
+
+/* Add a visible end marker to show users they've reached the bottom */
+.categoriesContainer::after {
+  content: "End of filters";
+  display: block;
+  text-align: center;
+  padding: 20px 0;
+  color: #718096;
+  font-style: italic;
+  font-size: 0.9rem;
+  width: 100%;
+  margin-top: 20px;
+  border-top: 1px dashed #cbd5e0;
+}
+
+/* Category section with fixed height */
+.categorySection {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #fff;
+  margin-bottom: 5px;
+  /* No height transitions to prevent UI jumps */
+  transition: opacity 0.2s ease;
+  overflow: hidden; /* Keep content within bounds */
+  width: 100%;
+  /* Prevent margin collapse */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Category header */
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  background-color: #f8fafc;
+  user-select: none;
+}
+
+.categoryHeader:hover {
+  background-color: #f1f5f9;
+}
+
+/* Fix for the tags container to prevent layout shifts */
+.tagsContainer {
+  /* Fixed height with scrolling */
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8fafc;
+  /* Ensure proper scrolling behavior */
+  flex-shrink: 0;
+  /* Prevent unintended expansion */
+  will-change: height;
+}
+
+/* Custom scrollbar for tags */
+.tagsContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tagsContainer::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.tagsContainer::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 3px;
+}
+
+/* Tag items in a wrapping layout */
+.tagItem {
+  display: inline-flex;
+  align-items: center;
+  margin: 3px;
+  padding: 4px 8px;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  max-width: calc(100% - 6px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+/* Active filters section with fixed layout */
+.activeFiltersSection {
+  margin: 8px 15px;
+  padding: 10px;
+  background-color: #ebf8ff;
+  border-radius: 6px;
+  border: 1px solid #bee3f8;
+  /* Don't grow/shrink with content */
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Search results container */
+.searchResults {
+  margin: 10px 15px;
+  background-color: #fff;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  /* Fixed height with scrolling if needed */
+  max-height: 300px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Rest of the styles remain unchanged */
+
+/* Filter header styles */
+.filterHeader h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+  color: #2d3748;
+}
+
+/* Sidebar header with search */
+.sidebarHeader {
+  padding: 10px 15px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 52px; /* Adjusted to accommodate the filter header */
+  z-index: 10;
+}
+
+.sidebarTitle {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  color: #4a5568;
+  font-weight: 600;
+}
+
+/* Categories container with scrolling */
+.categoriesContainer {
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+/* Category section */
+.categorySection {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #fff;
+  margin-bottom: 5px;
+  /* Important - prevent height changes on collapse */
+  transition: all 0.2s ease;
+  will-change: opacity;
+}
+
+/* Category header */
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  background-color: #f8fafc;
+  border-bottom: 1px solid transparent;
+  user-select: none;
+}
+
+.categoryHeader:hover {
+  background-color: #f1f5f9;
+}
+
+.categoryIcon {
+  margin-right: 10px;
+  color: #4a5568;
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.categoryLabel {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+}
+
+.expandIcon {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+/* Improved tags container to prevent UI expansion */
+.tagsContainer {
+  /* Fixed height with scrolling when needed */
+  max-height: 200px; 
+  overflow-y: auto;
+  padding: 8px 12px;
+  background-color: #f8fafc;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Custom scrollbar for tags container */
+.tagsContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tagsContainer::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.tagsContainer::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 3px;
+  border: 1.5px solid #f8fafc;
+}
+
+/* Tag items */
+.tagItem {
+  display: inline-flex;
+  align-items: center;
+  margin: 4px;
+  padding: 4px 8px;
+  background-color: #edf2f7;
+  color: #4a5568;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.tagItem:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.tagItem.selected {
+  background-color: #4299e1;
+  color: white;
+}
+
+/* Deep search toggle */
+.deepSearchToggle {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #4a5568;
+}
+
+.deepSearchToggle label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.deepSearchToggle input {
+  margin-right: 8px;
+}
+
+.deepSearchToggle small {
+  display: block;
+  margin-top: 4px;
+  color: #718096;
+  padding-left: 20px;
+}
+
+/* Active filters section */
+.activeFiltersSection {
+  padding: 12px;
+  background-color: #ebf8ff;
+  margin: 10px 15px;
+  border-radius: 6px;
+  border: 1px solid #bee3f8;
+  /* Prevent overflow without changing layout */
+  overflow: hidden;
+}
+
+.activeFiltersHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #3182ce;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.activeFiltersHeader svg {
+  margin-right: 8px;
+}
+
+.clearAllButton {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #e53e3e;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.clearAllButton:hover {
+  background-color: #fed7d7;
+}
+
+/* Search container */
+.searchContainer {
+  position: relative;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+  font-size: 0.9rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 10px 8px 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 1px #4299e1;
+}
+
+.clearSearchButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+  font-size: 0.9rem;
   padding: 0;
-  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* No results message */
+.noSearchResults {
+  padding: 20px;
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  margin: 15px;
+}
+
+/* Empty state for no tags */
+.emptyTagsMessage {
+  padding: 10px;
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  font-size: 0.85rem;
 }
 
 .sidebarHeader {
@@ -404,4 +1087,244 @@ mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Add a scrollback to top button at the bottom - new feature */
+.scrollTopButton {
+  position: fixed; /* Changed from sticky to fixed */
+  bottom: 30px;
+  left: 140px; /* Center it in the sidebar */
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #4299e1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* Stronger shadow */
+  opacity: 0.95;
+  border: none;
+  z-index: 1000; /* Ensure it's above everything */
+  /* Make it more noticeable */
+  font-size: 1.2rem;
+}
+
+.scrollTopButton:hover {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
+/* Ensure all elements in the scrollable area are visible */
+.categoriesScrollView > * {
+  flex-shrink: 0;
+}
+
+/* Add these new styles to support loading indicators */
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  height: 200px;
+}
+
+.loadingSpinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorContainer {
+  padding: 15px;
+  background-color: #ffebee;
+  border-left: 4px solid #f44336;
+  color: #721c24;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+/* Improved tag container to ensure better visibility */
+.tagsContainer {
+  overflow-y: auto;
+  position: relative;
+  padding-right: 2px;
+  scroll-behavior: smooth;
+  /* scrollbar styling for better visibility */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8f9fa;
+}
+
+.tagsContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tagsContainer::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.tagsContainer::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 4px;
+  border: 2px solid #f8f9fa;
+}
+
+/* Tag items container - force vertical layout */
+.tagItems {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 6px 8px 12px;
+  position: relative;
+}
+
+/* Indicator when more items are available through scrolling */
+.hasScrollIndicator {
+  padding-bottom: 30px; /* Make room for the indicator */
+}
+
+.scrollMoreIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 4px;
+  font-size: 0.75rem;
+  color: #4a5568;
+  background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.9) 20%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Improved individual tag styling */
+.tagItem {
+  padding: 6px 10px;
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  border-left: 3px solid transparent;
+  /* Force single line with ellipsis */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Ensure each tag takes full width of container */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tagItem:hover {
+  background-color: #e2e8f0;
+  transform: translateX(2px);
+  border-left-color: #3182ce;
+}
+
+.tagItem.selected {
+  background-color: #ebf8ff;
+  border-left-color: #2b6cb0;
+  font-weight: 500;
+}
+
+/* Threshold slider container */
+.thresholdContainer {
+  padding: 10px;
+  margin-top: 5px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.thresholdHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.thresholdIcon {
+  margin-right: 8px;
+  color: #3182ce;
+}
+
+.sliderContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 0 6px;
+}
+
+.thresholdSlider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: #e2e8f0;
+  outline: none;
+  margin: 10px 0;
+}
+
+.thresholdSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3182ce;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.thresholdSlider::-webkit-slider-thumb:hover {
+  background: #2c5282;
+  transform: scale(1.1);
+}
+
+.thresholdSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3182ce;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s, transform 0.2s;
+  border: none;
+}
+
+.thresholdSlider::-moz-range-thumb:hover {
+  background: #2c5282;
+  transform: scale(1.1);
+}
+
+.sliderLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+/* Adjust filter controls for better spacing */
+.filterControls {
+  padding: 0 12px 8px;
+  background-color: #f7f9fc;
+  border-bottom: 1px solid #e2e8f0;
 }

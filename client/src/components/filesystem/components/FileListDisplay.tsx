@@ -3,7 +3,7 @@ import type { BlobItem, SortKey, SortDirection } from '../types'; // Import type
 import styles from '../BasicFileSystem.module.css'; // Assuming styles are imported from the parent's module
 import { formatFileSize, formatDate } from '../utils/formatters'; // Go up two levels to src/utils
 // --- Import Action Icons ---
-import { FaDownload, FaTrashAlt, FaFilter, FaFolder } from 'react-icons/fa'; // Import required icons
+import { FaDownload, FaTrashAlt, FaFilter, FaFolder, FaUpload } from 'react-icons/fa'; // Import required icons
 // --- End Import ---
 import { FileIcon, FolderIcon } from './Icons'; // Assuming Icons.tsx is in the same directory
 // Remove framer-motion dependency to avoid conflicts with drag events
@@ -39,6 +39,9 @@ interface FileListDisplayProps {
   highlightedPath?: string | null; // Make optional or required based on usage
   onEditMetadata: (item: BlobItem) => void; // Add edit metadata handler prop
   isFiltering?: boolean; // Add isFiltering prop
+  isFilterActive?: boolean;
+  isSearching?: boolean;
+  onClearFilters?: () => void; // Add clear filters handler prop
 }
 
 const FileListDisplay: React.FC<FileListDisplayProps> = ({
@@ -71,6 +74,9 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
   highlightedPath,
   onEditMetadata, // Use edit metadata handler
   isFiltering = false, // Use isFiltering prop
+  isFilterActive = false,
+  isSearching = false,
+  onClearFilters, // Use clear filters handler
 }) => {
   // --- REMOVED: State for hover effect ---
   // const [isHoveringItem, setIsHoveringItem] = useState(false);
@@ -114,8 +120,33 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
   }, [highlightedPath, items]); // Re-run when highlightPath or items change
   // --- End Effect ---
 
+  const renderFilterStatus = () => {
+    if (isSearching) {
+      return (
+        <div className={styles.filterStatus}>
+          <div className={styles.searchingIndicator}>
+            Searching...
+          </div>
+        </div>
+      );
+    }
+    
+    if (isFilterActive) {
+      return (
+        <div className={styles.filterStatus}>
+          <div className={styles.filterActiveIndicator}>
+            Filter Active: Showing filtered results only
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <div className={styles.fileListContainer}>
+      {renderFilterStatus()}
       {/* Header Row */}
       <div className={`${styles.fileItem} ${styles.fileListHeader}`}>
         <input
@@ -146,20 +177,36 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
       {/* File Items List */}
       {isLoading ? (
         <div className={styles.loading}>Loading...</div>
-      ) : items.length === 0 ? (
-        <div className={styles.emptyState}>
-          {isFiltering ? (
-            <>
-              <FaFilter size={48} className={styles.emptyIcon} />
-              <h3>No matching files</h3> {/* Fixed closing h3 tag */}
-              <p>Try adjusting your filter criteria</p>
-            </>
+      ) : items.length === 0 && !isLoading ? (
+        <div className={styles.emptyStateContainer}>
+          {isFilterActive ? (
+            <div className={styles.emptyFilterResults}>
+              <FaFilter className={styles.emptyStateIcon} />
+              <h3 className={styles.emptyStateTitle}>No files match your filters</h3>
+              <p className={styles.emptyStateDescription}>
+                Try adjusting your filter criteria or clear filters to see all files
+              </p>
+              <button 
+                className={styles.clearFiltersButton}
+                onClick={() => {
+                  if (typeof onClearFilters === 'function') onClearFilters();
+                }}
+              >
+                Clear All Filters
+              </button>
+            </div>
           ) : (
-            <>
-              <FaFolder size={48} className={styles.emptyIcon} />
-              <h3>This folder is empty</h3>
-              <p>Drag and drop files here to upload</p>
-            </>
+            <div className={styles.emptyFolderState}>
+              <FaFolder className={styles.emptyStateIcon} />
+              <h3 className={styles.emptyStateTitle}>This folder is empty</h3>
+              <p className={styles.emptyStateDescription}>
+                Upload files to this location using the toolbar or drag and drop files here
+              </p>
+              <div className={styles.dropFilesHint}>
+                <FaUpload className={styles.uploadIcon} />
+                <span>Drop files here to upload</span>
+              </div>
+            </div>
           )}
         </div>
       ) : (

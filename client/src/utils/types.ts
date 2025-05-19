@@ -56,3 +56,12 @@ export interface ChatMessage {
   error?: boolean;
   isIntroduction?: boolean;
 }
+
+export interface AnswerQuestionOptions {
+  enforceExactMatch?: boolean;
+  maxResults?: number;
+  systemMessage?: {
+    role: string;
+    content: string;
+  };
+}

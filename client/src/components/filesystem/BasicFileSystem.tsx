@@ -29,11 +29,114 @@ import { FaFolder, FaFile } from 'react-icons/fa';
 // Add import for MetadataFilterBar
 import MetadataFilterBar from './components/MetadataFilterBar';
 
+// Add new import for search bar icons and styling
+import { FaSearch, FaTimesCircle, FaMicrophone } from 'react-icons/fa';
+
+// Import metadataOptions to have access to all possible tag values
+import metadataOptionsData from '../../components/managefields/metadataOptions.json';
+
 const MENU_ID = "file-item-menu";
 
 // Define a ref type for external components to trigger the file upload
 export type FileSystemRefType = {
   triggerFileUpload: () => void;
+  navigateToPath: (path: string) => void;
+};
+
+// Add this new component before the BasicFileSystem component
+const NLPSearchBar: React.FC<{
+  onSearch: (query: string) => void;
+  isSearching: boolean;
+  onClearSearch?: () => void; // Add optional callback for clearing search
+}> = ({ onSearch, isSearching, onClearSearch }) => {
+  const [query, setQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      onSearch(query.trim());
+    }
+  };
+
+  const clearSearch = () => {
+    setQuery('');
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+    // Call the parent's onClearSearch if it exists
+    if (onClearSearch) {
+      onClearSearch();
+    }
+  };
+
+  // Simulate voice input (in a real app, you'd use Web Speech API)
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+    
+    setIsListening(true);
+    // Simulate voice recognition with a timeout
+    setTimeout(() => {
+      setQuery(prev => prev + " Find documents about land reform");
+      setIsListening(false);
+    }, 2000);
+  };
+
+  return (
+    <div className={styles.nlpSearchContainer}>
+      <form onSubmit={handleSubmit} className={styles.nlpSearchForm}>
+        <div 
+          className={`${styles.searchInputWrapper} ${isFocused ? styles.focused : ''}`}
+        >
+          <FaSearch className={styles.searchIcon} />
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder="Ask anything about your documents..."
+            className={styles.nlpSearchInput}
+            disabled={isSearching}
+          />
+          {query && (
+            <button 
+              type="button" 
+              onClick={clearSearch} 
+              className={styles.clearSearchButton}
+              aria-label="Clear search"
+            >
+              <FaTimesCircle />
+            </button>
+          )}
+          <button 
+            type="button"
+            onClick={toggleVoiceInput}
+            className={`${styles.voiceSearchButton} ${isListening ? styles.listening : ''}`}
+            aria-label="Voice search"
+          >
+            <FaMicrophone />
+          </button>
+        </div>
+        <button 
+          type="submit" 
+          className={styles.searchButton}
+          disabled={!query.trim() || isSearching}
+        >
+          {isSearching ? 'Searching...' : 'Search'}
+        </button>
+      </form>
+      <div className={styles.searchExamples}>
+        <p>Examples: <span onClick={() => setQuery("Show PDF files with 'land reform' from 2020")}>Show PDF files with 'land reform' from 2020</span> • <span onClick={() => setQuery("Find documents about constitutional development")}>Find documents about constitutional development</span></p>
+      </div>
+    </div>
+  );
 };
 
 // Convert to forwardRef to expose methods to parent components
@@ -83,6 +186,12 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
 
   // Add state for selected metadata tags
   const [selectedMetadataTags, setSelectedMetadataTags] = useState<{ category: string, tag: string }[]>([]);
+  // Add these state variables for filtering before they're used in sortedItems
+  const [isFilterActive, setIsFilterActive] = useState<boolean>(false);
+  const [filteredItems, setFilteredItems] = useState<BlobItem[]>([]);
+  const [isMetadataSearchMode, setIsMetadataSearchMode] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
   // --- Context Menu Hook ---
   const { show } = useContextMenu({ id: MENU_ID });
@@ -104,6 +213,10 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
+    },
+    navigateToPath: (path: string) => {
+      // Call the existing navigateToPath function
+      navigateToPath(path);
     }
   }));
 
@@ -1140,16 +1253,18 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
 
   // --- Memoize Sorted Items ---
   const sortedItems = useMemo(() => {
+    // If filter is active, sort the filtered items instead of all items
+    const itemsToSort = isFilterActive ? filteredItems : items;
     // --- Add check for items array ---
-    if (!Array.isArray(items)) {
-        console.error("[Sort] Items is not an array:", items);
+    if (!Array.isArray(itemsToSort)) {
+        console.error("[Sort] Items is not an array:", itemsToSort);
         return [];
     }
     // --- End check ---
-    const sorted = [...items].sort((a, b) => {
+    const sorted = [...itemsToSort].sort((a, b) => {
         // --- Add more robust checks for item validity ---
         const validA = a && typeof a.name === 'string' && typeof a.path === 'string';
-        const validB = b && typeof b.name === 'string' && typeof b.path === 'string';
+        const validB = b && typeof a.name === 'string' && typeof a.path === 'string';
 
         if (!validA || !validB) {
             // Log the invalid item(s) for debugging
@@ -1203,7 +1318,7 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
         return sortDirection === 'asc' ? comparison : comparison * -1;
     });
     return sorted;
-  }, [items, sortKey, sortDirection]);
+  }, [items, filteredItems, isFilterActive, sortKey, sortDirection]);
   // --- END Memoize ---
 
 
@@ -1341,6 +1456,413 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
     });
   };
 
+  // Add a new useEffect to trigger metadata search when selected tags change
+  useEffect(() => {
+    // Only search if there are selected tags
+    if (selectedMetadataTags.length > 0) {
+      handleMetadataSearch();
+    } else if (isFilterActive) {
+      // Clear filter when no tags are selected
+      setIsFilterActive(false);
+      setFilteredItems([]);
+    }
+  }, [selectedMetadataTags, isMetadataSearchMode]);
+
+  // Fix TypeScript errors in metadata search function
+  const handleMetadataSearch = async () => {
+    if (selectedMetadataTags.length === 0) {
+      setIsFilterActive(false);
+      setFilteredItems([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    setError(null);
+    
+    try {
+      // Group selected tags by category to identify special cases
+      const grouped = selectedMetadataTags.reduce((acc, tag) => {
+        if (!acc[tag.category]) {
+          acc[tag.category] = [];
+        }
+        acc[tag.category].push(tag);
+        return acc;
+      }, {} as Record<string, { category: string, tag: string }[]>);
+      
+      // Check if we have both primary theme and subthemes selected
+      const hasPrimaryTheme = grouped['thematicfocus_primary']?.length > 0;
+      const hasSubthemes = grouped['thematicfocus_subthemes']?.length > 0;
+      
+      // If only theme tags are selected, use OR logic regardless of global setting
+      const isThemeOnlySearch = 
+        selectedMetadataTags.every(tag => 
+          tag.category === 'thematicfocus_primary' || 
+          tag.category === 'thematicfocus_subthemes'
+        );
+      
+      // Determine search logic to use - we may override it for theme-only searches
+      const searchLogic: 'AND' | 'OR' = isThemeOnlySearch ? 'OR' : filterLogic;
+      
+      // For API calls - use the standard tags with appropriate logic
+      const results = await fileSystemService.searchByMetadata(
+        selectedMetadataTags,
+        currentPath,
+        isMetadataSearchMode,
+        searchLogic
+      );
+      
+      if (results && results.items) {
+        setFilteredItems(results.items);
+        setIsFilterActive(true);
+        
+        // Create a descriptive message about the search logic for display only
+        let displayMessage = `Found ${results.totalItems} file(s) matching your filter criteria using ${searchLogic} logic`;
+        
+        // Add special note about theme/subtheme behavior if applicable
+        if (hasPrimaryTheme && hasSubthemes) {
+          displayMessage += " (with OR between themes and subthemes)";
+        }
+        
+        notifyInfo(displayMessage);
+      } else {
+        // Handle empty results
+        setFilteredItems([]);
+        setIsFilterActive(true);
+        notifyInfo(`No files found matching the selected filter criteria`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      notifyError(`Search failed: ${message}`);
+      // If search fails, keep showing unfiltered items
+      setIsFilterActive(false);
+      setFilteredItems([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Add this function to handle toggling deep search mode
+  const handleToggleMetadataSearchMode = () => {
+    setIsMetadataSearchMode(prevMode => !prevMode);
+  };
+
+  // Add this function to clear filters
+  const handleClearFilters = () => {
+    setSelectedMetadataTags([]);
+    setIsFilterActive(false);
+    setFilteredItems([]);
+    
+    // Also collapse all filter sections
+    setExpandedSections([]);
+  };
+
+  // Add state for filter logic
+  const [filterLogic, setFilterLogic] = useState<'AND' | 'OR'>('AND');
+
+  // Handle filter logic change
+  const handleFilterLogicChange = (logic: 'AND' | 'OR') => {
+    setFilterLogic(logic);
+    
+    // If there are already selected tags, re-run the search with the new logic
+    if (selectedMetadataTags.length > 0) {
+      handleMetadataSearch();
+    }
+  };
+
+  // Add these missing state variables for NLP search
+  const [nlpQuery, setNlpQuery] = useState<string>('');
+  const [isNlpSearching, setIsNlpSearching] = useState<boolean>(false);
+
+  // Enhanced NLP search with OR logic as default and special theme handling
+  const handleNlpSearch = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setIsNlpSearching(true);
+    setError(null);
+    setNlpQuery(query);
+    
+    try {
+      console.log(`[NLP Search] Analyzing query: "${query}"`);
+      
+      // Normalize query for matching (lowercase)
+      const normalizedQuery = query.toLowerCase();
+      
+      // Determine search logic (AND vs OR) based on query content
+      // Look for explicit AND keywords instead of OR keywords
+      const hasAndKeyword = /\b(and|both|all)\b/.test(normalizedQuery);
+      
+      // Choose logic based on query phrasing - default to OR unless AND is explicitly specified
+      const detectedLogic: 'AND' | 'OR' = hasAndKeyword ? 'AND' : 'OR';
+      console.log(`[NLP Search] Detected search logic: ${detectedLogic} (defaulting to OR unless AND specified)`);
+      
+      // Set the filter logic (will be used when the search is executed)
+      setFilterLogic(detectedLogic);
+      
+      // Extract potential category/tag pairs from the query
+      const exactMatches: { category: string, tag: string }[] = [];
+      const partialMatches: { category: string, tag: string, matchedTerm: string }[] = [];
+      
+      // Map from metadataOptions fields to API filter fields
+      const apiFieldMap: Record<string, string> = {
+        'collection': 'collection',
+        'jurisdictionType': 'jurisdiction_type',
+        'jurisdictionName': 'jurisdiction_name',
+        'thematicFocusPrimary': 'thematicfocus_primary',
+        'thematicFocusSubthemes': 'thematicfocus_subthemes',
+        'issuingAuthorityType': 'issuingauthority_type',
+        'issuingAuthorityName': 'issuingauthority_name',
+        'documentFunction': 'documentfunction',
+        'version': 'version',
+        'workflowStagePrimary': 'workflowstage_primary',
+        'workflowStageSub': 'workflowstage_sub',
+        'language': 'language',
+        'accessLevel': 'accesslevel',
+        'fileType': 'filetype',
+        'license': 'license'
+      };
+      
+      // Extract meaningful words from query (for partial matching)
+      const queryWords = normalizedQuery
+        .replace(/[.,;:!?()[\]{}'"]/g, ' ') // Remove punctuation
+        .split(/\s+/)                        // Split by whitespace
+        .filter(word => 
+          word.length > 3 &&                  // Only consider words with 4+ characters to reduce noise
+          !['with', 'from', 'about', 'that', 'this', 'these', 'those', 
+            'have', 'what', 'when', 'where', 'which', 'there', 'their',
+            'would', 'could', 'should', 'find', 'show', 'give', 'and', 
+            'documents', 'files'].includes(word) // Skip common words
+        );
+      
+      console.log(`[NLP Search] Extracted keywords for matching: ${queryWords.join(', ')}`);
+      
+      // Process metadata options to look for matches
+      Object.entries(metadataOptionsData).forEach(([category, values]) => {
+        // Get the API field name for this category
+        const apiFieldName = apiFieldMap[category] || category.toLowerCase();
+        
+        // Process simple array values
+        if (Array.isArray(values)) {
+          values.forEach(tag => {
+            // Create variations of the tag for matching (with and without underscores)
+            const tagVariations = [
+              tag.toLowerCase(),                     // Original with underscores: "south_africa"
+              tag.toLowerCase().replace(/_/g, ' '),  // Spaces instead of underscores: "south africa"
+              tag.toLowerCase().replace(/_/g, '')    // No spaces or underscores: "southafrica"
+            ];
+            
+            // First, try exact matches (as complete words/phrases)
+            const exactMatch = tagVariations.some(variant => {
+              const wholeWordRegex = new RegExp(`\\b${variant}\\b`, 'i');
+              return wholeWordRegex.test(normalizedQuery);
+            });
+            
+            if (exactMatch) {
+              exactMatches.push({ 
+                category: apiFieldName, 
+                tag: tag 
+              });
+              console.log(`[NLP Search] Exact match found for tag: ${apiFieldName}:${tag}`);
+            } else {
+              // If no exact match, try partial matching with keywords
+              const tagWords = tag
+                .toLowerCase()
+                .replace(/_/g, ' ')
+                .split(/\s+/)
+                .filter(word => word.length > 3); // Only consider significant words
+              
+              // Look for significant tag words in query words or vice versa
+              for (const queryWord of queryWords) {
+                // Match if query word is a significant part of a tag (e.g., "rights" in "Human_Rights")
+                if (tagWords.some(tagWord => tagWord === queryWord || 
+                                  (tagWord.length > 5 && tagWord.includes(queryWord) && queryWord.length > 4))) {
+                  partialMatches.push({
+                    category: apiFieldName,
+                    tag: tag,
+                    matchedTerm: queryWord
+                  });
+                  console.log(`[NLP Search] Partial match: "${queryWord}" found in tag "${tag}"`);
+                  break; // Only count one match per tag
+                }
+                
+                // Also match if tag is a significant part of query word
+                // (e.g., "constitutional" matches "Constitutional_Drafting")
+                if (tagVariations.some(variant => 
+                    queryWord.includes(variant) && 
+                    variant.length > 4 && 
+                    queryWord.length > variant.length)) {
+                  partialMatches.push({
+                    category: apiFieldName,
+                    tag: tag,
+                    matchedTerm: queryWord
+                  });
+                  console.log(`[NLP Search] Partial match: tag "${tag}" found in query word "${queryWord}"`);
+                  break;
+                }
+              }
+            }
+          });
+        } 
+        // Process nested object values (like jurisdictionName.Provincial)
+        else if (typeof values === 'object') {
+          // First check parent categories (e.g., "Provincial" in jurisdictionName)
+          Object.entries(values).forEach(([parentValue, childValues]) => {
+            // Check for exact matches with parent
+            const parentVariations = [
+              parentValue.toLowerCase(),
+              parentValue.toLowerCase().replace(/_/g, ' '),
+              parentValue.toLowerCase().replace(/_/g, '')
+            ];
+            
+            const parentExactMatch = parentVariations.some(variant => {
+              const wholeWordRegex = new RegExp(`\\b${variant}\\b`, 'i');
+              return wholeWordRegex.test(normalizedQuery);
+            });
+            
+            if (parentExactMatch) {
+              exactMatches.push({
+                category: apiFieldName,
+                tag: parentValue
+              });
+              console.log(`[NLP Search] Exact match found for parent tag: ${apiFieldName}:${parentValue}`);
+            } else {
+              // Try partial match for parent values
+              const parentWords = parentValue
+                .toLowerCase()
+                .replace(/_/g, ' ')
+                .split(/\s+/)
+                .filter(word => word.length > 3);
+              
+              for (const queryWord of queryWords) {
+                if (parentWords.some(parentWord => parentWord === queryWord || 
+                                    (parentWord.length > 5 && parentWord.includes(queryWord) && queryWord.length > 4))) {
+                  partialMatches.push({
+                    category: apiFieldName,
+                    tag: parentValue,
+                    matchedTerm: queryWord
+                  });
+                  console.log(`[NLP Search] Partial match: "${queryWord}" found in parent "${parentValue}"`);
+                  break;
+                }
+                
+                if (parentVariations.some(variant => 
+                    queryWord.includes(variant) && 
+                    variant.length > 4 && 
+                    queryWord.length > variant.length)) {
+                  partialMatches.push({
+                    category: apiFieldName,
+                    tag: parentValue,
+                    matchedTerm: queryWord
+                  });
+                  console.log(`[NLP Search] Partial match: parent "${parentValue}" found in query word "${queryWord}"`);
+                  break;
+                }
+              }
+            }
+            
+            // Then check child values (e.g., "Gauteng" in jurisdictionName.Provincial)
+            if (Array.isArray(childValues)) {
+              childValues.forEach(childValue => {
+                // Check for exact matches with child values
+                const childVariations = [
+                  childValue.toLowerCase(),
+                  childValue.toLowerCase().replace(/_/g, ' '),
+                  childValue.toLowerCase().replace(/_/g, '')
+                ];
+                
+                const childExactMatch = childVariations.some(variant => {
+                  const wholeWordRegex = new RegExp(`\\b${variant}\\b`, 'i');
+                  return wholeWordRegex.test(normalizedQuery);
+                });
+                
+                if (childExactMatch) {
+                  exactMatches.push({
+                    category: apiFieldName,
+                    tag: childValue
+                  });
+                  console.log(`[NLP Search] Exact match found for child tag: ${apiFieldName}:${childValue}`);
+                } else {
+                  // Try partial match for child values
+                  const childWords = childValue
+                    .toLowerCase()
+                    .replace(/_/g, ' ')
+                    .split(/\s+/)
+                    .filter(word => word.length > 3);
+                  
+                  for (const queryWord of queryWords) {
+                    if (childWords.some(childWord => childWord === queryWord || 
+                                      (childWord.length > 5 && childWord.includes(queryWord) && queryWord.length > 4))) {
+                      partialMatches.push({
+                        category: apiFieldName,
+                        tag: childValue,
+                        matchedTerm: queryWord
+                      });
+                      console.log(`[NLP Search] Partial match: "${queryWord}" found in child "${childValue}"`);
+                      break;
+                    }
+                    
+                    if (childVariations.some(variant => 
+                        queryWord.includes(variant) && 
+                        variant.length > 4 && 
+                        queryWord.length > variant.length)) {
+                      partialMatches.push({
+                        category: apiFieldName,
+                        tag: childValue,
+                        matchedTerm: queryWord
+                      });
+                      console.log(`[NLP Search] Partial match: child "${childValue}" found in query word "${queryWord}"`);
+                      break;
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+      
+      // First prioritize exact matches
+      if (exactMatches.length > 0) {
+        setSelectedMetadataTags(exactMatches);
+        notifyInfo(`Using ${detectedLogic} logic with ${exactMatches.length} exact matches: ${exactMatches.map(t => t.tag.replace(/_/g, ' ')).join(', ')}`);
+      }
+      // If no exact matches, try using partial matches (but only if we have meaningful ones)
+      else if (partialMatches.length > 0) {
+        // Remove duplicates by removing matching tags that point to the same category/tag
+        const uniquePartialMatches = partialMatches.reduce((acc, match) => {
+          const exists = acc.some(m => m.category === match.category && m.tag === match.tag);
+          if (!exists) acc.push(match);
+          return acc;
+        }, [] as typeof partialMatches);
+        
+        // Only use top matches if we have many
+        const usedMatches = uniquePartialMatches.length > 3 
+          ? uniquePartialMatches.slice(0, 3) // Limit to 3 if we have many partial matches
+          : uniquePartialMatches;
+        
+        // Convert to tag format expected by filter
+        const tagsToUse = usedMatches.map(m => ({ category: m.category, tag: m.tag }));
+        
+        setSelectedMetadataTags(tagsToUse);
+        
+        // Create more informative message about partial matches
+        const matchInfo = usedMatches.map(m => 
+          `${m.tag.replace(/_/g, ' ')} (matched "${m.matchedTerm}")`
+        ).join(', ');
+        
+        notifyInfo(`No exact matches found. Using ${detectedLogic} logic with ${usedMatches.length} partial matches: ${matchInfo}`);
+      } else {
+        // No matches at all
+        notifyInfo(`No matching tags found in your query. Try including specific terms like "DA", "Gauteng", or "Land Reform".`);
+      }
+      
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      notifyError(`Search failed: ${message}`);
+    } finally {
+      setIsNlpSearching(false);
+    }
+  };
+
   // --- Fix JSX Structure ---
   return (
     <div className={styles.container}> {/* Main container with flex layout */}
@@ -1362,6 +1884,19 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
       <MetadataFilterBar
         onTagSelect={handleMetadataTagSelect}
         selectedTags={selectedMetadataTags}
+        isMetadataFilterMode={isMetadataSearchMode}
+        onToggleFilterMode={handleToggleMetadataSearchMode}
+        onClearFilters={handleClearFilters}
+        filterLogic={filterLogic}
+        onFilterLogicChange={handleFilterLogicChange}
+        expandedSections={expandedSections} // Pass the expanded sections
+        onSectionToggle={(section: string) => {
+          setExpandedSections((prev: string[]) => 
+            prev.includes(section) 
+              ? prev.filter((s: string) => s !== section)
+              : [...prev, section]
+          );
+        }}
       />
 
       {/* Main content area */}
@@ -1369,14 +1904,12 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
        
 
         {/* --- Update Upload Section to use new trigger --- */}
-        <UploadSection
-          isLoading={isLoading}
-          uploading={uploading} // Keep using uploading state for general feedback
-          onFileUpload={handleFileUploadTrigger} // Use the trigger function
-          fileInputRef={fileInputRef} // Pass the ref to access the file input
+        <NLPSearchBar 
+          onSearch={handleNlpSearch}
+          isSearching={isNlpSearching}
+          onClearSearch={handleClearFilters} // Clear metadata tags when search is cleared
         />
-        {/* --- End Update --- */}
-
+        
         <Toolbar
           selectedCount={selectedPaths.size}
           isMoveActive={isMoveActive}
@@ -1443,6 +1976,8 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
             // --- Pass highlightedPath prop ---
             highlightedPath={highlightedPath}
             // --- End Pass ---
+            isFilterActive={isFilterActive}
+            isSearching={isSearching}
           />
         )}
 
@@ -1451,7 +1986,6 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
           onClose={handleCloseModal}
         />
 
-        {/* Render the Properties Modal */}
         <PropertiesModal
           properties={propertiesItem}
           isLoading={isPropertiesLoading}
@@ -1494,8 +2028,8 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
           {/* --- NEW: Edit Metadata Item --- */}
           <Item
               onClick={handleContextEditMetadata}
-              // Disable if the context item is a directory
-              disabled={({ props }) => props?.isDirectory === true}
+              // Fix typing for the disabled prop to match the expected HandlerParams interface
+              disabled={(args) => args.props?.isDirectory === true}
           >
             Edit Metadata
           </Item>

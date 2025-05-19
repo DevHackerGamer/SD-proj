@@ -15,7 +15,9 @@ import {
   FaBuilding, FaRegFileCode, FaCodeBranch, FaRocket,
   FaExpandArrowsAlt, FaCompressArrowsAlt // Icons for toggle
 } from 'react-icons/fa';
-import { fileSystemService } from '../FileSystemService'; // <-- Add this import
+import { fileSystemService } from '../FileSystemService';
+// Import as fallback options in case API fetch fails
+import fallbackMetadataOptions from '../../../components/managefields/metadataOptions.json';
 
 // --- Move helper functions to the top, before any usage ---
 
@@ -63,171 +65,7 @@ function parseDateSafe(dateStr: string | undefined | null): Date | null {
 }
 
 // Add this at the top, before the component definition
-const defaultMetadataOptions: MetadataOptionsType = {
-    // Collections (Step 1)
-    collection: [
-        "Constitutional_Development", 
-        "Truth_and_Reconciliation_Commission", 
-        "Judicial_History", 
-        "Public_Participation", 
-        "Pre-Apartheid_Legal_Systems", 
-        "Post-Apartheid_Governance", 
-        "Legislative_and_Justice_System_Records"
-    ],
-    // Jurisdictions (Step 2) - Type options only
-    jurisdictionType: [
-        "National", 
-        "Provincial", 
-        "Traditional_Authorities", 
-        "International"
-    ],
-    // Hierarchical jurisdiction names based on type
-    jurisdictionName: {
-        National: ["South_Africa"],
-        Provincial: [
-            "Gauteng", 
-            "KZN", 
-            "Eastern_Cape", 
-            "Western_Cape", 
-            "Limpopo", 
-            "Mpumalanga", 
-            "Free_State", 
-            "Northern_Cape", 
-            "North_West"
-        ],
-        Traditional_Authorities: [
-            "Khoisan_Communities", 
-            "Zulu_Kingdom"
-        ],
-        International: [
-            "United_Nations"
-        ]
-    },
-    // Thematic Focus (Step 3) - Primary themes only
-    thematicFocusPrimary: [
-        "Human_Rights", 
-        "Land_Reform", 
-        "Transitional_Justice", 
-        "Constitutional_Drafting", 
-        "Security_Laws"
-    ],
-    // Hierarchical subthemes based on primary theme
-    thematicFocusSubthemes: {
-        Human_Rights: [
-            "Bill_of_Rights", 
-            "Socio-Economic_Rights", 
-            "LGBTQ+_Protections"
-        ],
-        Land_Reform: [
-            "Expropriation", 
-            "Restitution", 
-            "Section_25"
-        ],
-        Transitional_Justice: [
-            "TRC_Testimonies", 
-            "Amnesty_Hearings", 
-            "Reparations"
-        ],
-        Constitutional_Drafting: [
-            "Multi-Party_Negotiations", 
-            "Public_Consultations", 
-            "Finalization_Stages"
-        ],
-        Security_Laws: [
-            "RICA", 
-            "State_Surveillance"
-        ]
-    },
-    // Issuing Authority (Step 4) - Types
-    issuingAuthorityType: [
-        "Political_Parties",
-        "Government_Bodies",
-        "Independent_Commissions",
-        "Civil_Society_Organizations",
-        "Individuals",
-        // Consider adding an "Other" type for manual entry if needed broadly
-    ],
-    // Hierarchical Issuing Authority Names based on type
-    issuingAuthorityName: {
-        Political_Parties: [
-            "ANC", "DA", "EFF", "IFP", "NFP"
-        ],
-        Government_Bodies: [
-            "Constitutional_Court", "Parliament", "Department_of_Justice", "Department_of_Land_Affairs"
-        ],
-        Independent_Commissions: [
-            "TRC", "Electoral_Commission", "Human_Rights_Commission", "Public_Protector_Office"
-        ],
-        Civil_Society_Organizations: [
-            "COSATU", "Section27", "Law_Review_Project", "Legal_Resource_Centre"
-        ],
-        Individuals: [
-            "Albie_Sachs", "Desmond_Tutu", "Nelson_Mandela", "Dullah_Omar"
-        ],
-        // Other: []
-    },
-    // Document Function (Step 5) - Updated options
-    documentFunction: [
-        "bill-draft",
-        "legal-revision",
-        "public-submission",
-        "consultation-record",
-        "parliamentary-debate",
-        "commission-report",
-        "government-gazette",
-        "amendment-bill",
-        "official-translation",
-        "Court_Judgement",
-        "Treaty_Agreement",
-        "Act",
-        "Research_Paper"
-    ],
-    // Version (Step 6)
-    version: [
-        "v0_Preliminary", 
-        "v1_internal_review", 
-        "v2_Public_Feedback", 
-        "v3_Revised_Draft", 
-        "v4_Final_Draft"
-    ],
-    // Workflow Stage (Step 7) - Primary Stages
-    workflowStagePrimary: [
-        "Creation",
-        "Approval",
-        "Post-Approval"
-    ],
-    // Hierarchical Workflow Sub-Stages based on primary stage
-    workflowStageSub: {
-        Creation: [
-            "Draft",
-            "Submitted",
-            "Under_Review",
-            "public-comment",
-            "committee-debate"
-        ],
-        Approval: [
-            "Committee_Approved",
-            "Certified",
-            "Enacted"
-        ],
-        Post_Approval: [
-            "Archived",
-            "Repealed",
-            "Superseded"
-        ]
-    },
-    // Other fields remain the same
-    language: ["en", "fr", "af", "zu", "xh", "ts", "st", "ve", "tn", "ss", "nr", "nso"],
-    accessLevel: ["public", "restricted", "admin-only"],
-    fileType: ["pdf", "docx", "txt", "jpeg", "png", "mp3", "mp4", "wav", "avi"],
-    license: [
-        "Creative Commons BY-SA", 
-        "Creative Commons BY-NC", 
-        "Public Domain", 
-        "Government Copyright", 
-        "All Rights Reserved"
-    ],
-};
+const defaultMetadataOptions: MetadataOptionsType = fallbackMetadataOptions;
 
 interface MetadataModalProps {
     file: File | null;
@@ -300,7 +138,52 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
         { id: 'confirmation', title: 'Step 10: Confirmation', fields: [] }, // <-- Step 10 added
     ]);
     const [fieldsConfig, setFieldsConfig] = useState<Record<string, any>>({});
-    const [metadataOptions] = useState<Record<string, any>>(defaultMetadataOptions);
+    const [metadataOptions, setMetadataOptions] = useState<Record<string, any>>(defaultMetadataOptions);
+
+    // Add new state variables for content analysis
+    const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+    const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+    const [hasAutoAnalyzed, setHasAutoAnalyzed] = useState<boolean>(false);
+
+    // Add this near the other state declarations
+    const [isFormInitialized, setIsFormInitialized] = useState(false);
+    const [lastActivity, setLastActivity] = useState(Date.now());
+    const localStorageKey = `metadata_form_${file?.name || editingItemPath || 'new_upload'}`;
+
+    // Add this after the state declarations to track user activity
+    const updateLastActivity = () => {
+        setLastActivity(Date.now());
+    };
+
+    // Add this effect to save form data to localStorage periodically
+    useEffect(() => {
+        if (!isOpen) return;
+
+        // Save form data to localStorage every 10 seconds
+        const formData = {
+            collection, jurisdictionType, jurisdictionName, thematicFocusPrimary,
+            thematicFocusSubthemes, issuingAuthorityType, issuingAuthorityName,
+            documentFunction, version, workflowStagePrimary, workflowStageSub,
+            fileType, tags, language, accessLevel, license, description,
+            finalItemName, targetPath, currentStep, 
+            hasManuallyEditedFilename, publicationDate: publicationDate?.toISOString()
+        };
+        
+        localStorage.setItem(localStorageKey, JSON.stringify(formData));
+        
+        // The auto-save happens after activity
+        const autoSaveInterval = setInterval(() => {
+            const timeSinceLastActivity = Date.now() - lastActivity;
+            if (timeSinceLastActivity < 60000) { // Only save if active in the last minute
+                localStorage.setItem(localStorageKey, JSON.stringify(formData));
+            }
+        }, 10000);
+        
+        return () => clearInterval(autoSaveInterval);
+    }, [isOpen, lastActivity, collection, jurisdictionType, jurisdictionName, thematicFocusPrimary,
+        thematicFocusSubthemes, issuingAuthorityType, issuingAuthorityName, documentFunction,
+        version, workflowStagePrimary, workflowStageSub, fileType, tags, language,
+        accessLevel, license, description, finalItemName, targetPath, currentStep]);
 
     // Function to calculate the DIRECTORY path
     const calculatePredictedPath = () => {
@@ -338,14 +221,74 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
     useEffect(() => {
         console.log("[MetadataModal Init Effect] Running. isOpen:", isOpen);
         if (!isOpen) {
-            isInitialLoadRef.current = true; // Reset ref when closing
+            // Don't reset form state when closing - just update the ref
+            isInitialLoadRef.current = true;
             console.log("[MetadataModal Init Effect] Modal closed, resetting initial load ref.");
             return; // Exit early if not open
+        }
+
+        // Check if the form has already been initialized for this session
+        if (isFormInitialized) {
+            console.log("[MetadataModal Init Effect] Form already initialized, skipping initialization");
+            return;
         }
 
         // Set ref to true at the beginning of the open process
         isInitialLoadRef.current = true;
         console.log("[MetadataModal Init Effect] Modal opened, isInitialLoadRef set to true.");
+
+        // Try to load saved form data from localStorage - only if NOT editing existing item
+        if (!editingItemPath) {
+            try {
+                const savedFormData = localStorage.getItem(localStorageKey);
+                if (savedFormData) {
+                    const parsedData = JSON.parse(savedFormData);
+                    console.log("[MetadataModal Init Effect] Found saved form data, automatically restoring");
+                    
+                    // Restore form data without confirmation (only for new uploads, not editing)
+                    setCollection(parsedData.collection || '');
+                    setJurisdictionType(parsedData.jurisdictionType || '');
+                    setJurisdictionName(parsedData.jurisdictionName || '');
+                    setThematicFocusPrimary(parsedData.thematicFocusPrimary || '');
+                    setThematicFocusSubthemes(parsedData.thematicFocusSubthemes || '');
+                    setIssuingAuthorityType(parsedData.issuingAuthorityType || '');
+                    setIssuingAuthorityName(parsedData.issuingAuthorityName || '');
+                    setDocumentFunction(parsedData.documentFunction || '');
+                    setVersion(parsedData.version || '');
+                    setWorkflowStagePrimary(parsedData.workflowStagePrimary || '');
+                    setWorkflowStageSub(parsedData.workflowStageSub || '');
+                    setPublicationDate(parsedData.publicationDate ? new Date(parsedData.publicationDate) : null);
+                    setFileType(parsedData.fileType || '');
+                    setTags(parsedData.tags || '');
+                    setLanguage(parsedData.language || '');
+                    setAccessLevel(parsedData.accessLevel || '');
+                    setLicense(parsedData.license || '');
+                    setDescription(parsedData.description || '');
+                    setFinalItemName(parsedData.finalItemName || '');
+                    setHasManuallyEditedFilename(parsedData.hasManuallyEditedFilename || false);
+                    setTargetPath(parsedData.targetPath || '');
+                    if (parsedData.currentStep) setCurrentStep(parsedData.currentStep);
+                    
+                    // Mark as initialized
+                    setIsFormInitialized(true);
+                    
+                    // Set initial load ref to false after restoring
+                    queueMicrotask(() => {
+                        isInitialLoadRef.current = false;
+                        console.log("[MetadataModal Init Effect] Restored saved form data. isInitialLoadRef set to false.");
+                    });
+                    
+                    return;
+                }
+            } catch (err) {
+                console.error("Error loading saved form data:", err);
+                localStorage.removeItem(localStorageKey);
+            }
+        } else {
+            console.log("[MetadataModal Init Effect] Editing existing item, bypassing localStorage restoration");
+        }
+
+        // Proceed with normal initialization (from initialMetadata or file) if needed
         console.log("[MetadataModal Init Effect] Received initialMetadata:", JSON.stringify(initialMetadata, null, 2));
         console.log("[MetadataModal Init Effect] Received editingItemPath:", editingItemPath);
 
@@ -386,10 +329,18 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
             tempLanguage = initialMetadata?.language || '';
             tempAccessLevel = initialMetadata?.accessLevel || '';
             tempLicense = initialMetadata?.license || '';
+            
+            // Ensure description is loaded from both possible sources with better logging
             tempDescription = initialMetadata?.description || initialMetadata?.contentSummary || '';
+            console.log(`[MetadataModal Init Effect] Extracted description: "${tempDescription.substring(0, 100)}${tempDescription.length > 100 ? '...' : ''}"`);
+            console.log(`[MetadataModal Init Effect] Source - description: ${initialMetadata?.description ? 'TRUE' : 'FALSE'}, contentSummary: ${initialMetadata?.contentSummary ? 'TRUE' : 'FALSE'}`);
+            
             // Tags: Ensure it's an array from parser, then join - Use optional chaining
             const tagsArray = Array.isArray(initialMetadata?.tags) ? initialMetadata.tags : [];
             tempTags = tagsArray.join(', ');
+            console.log(`[MetadataModal Init Effect] Extracted tags array: [${tagsArray.join(', ')}]`);
+            console.log(`[MetadataModal Init Effect] Tags as string: "${tempTags}"`);
+            
             // Initial fileType from top-level (may be overridden) - Use optional chaining
             tempFileType = initialMetadata?.fileType || '';
 
@@ -499,11 +450,20 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
             setWorkflowStageSub(tempWorkflowStageSub); console.log(` -> Set WorkflowStageSub state to: ${tempWorkflowStageSub}`);
             setPublicationDate(tempPublicationDate); console.log(` -> Set PublicationDate state to: ${tempPublicationDate?.toISOString() || 'null'}`);
             setFileType(tempFileType); console.log(` -> Set FileType state to: ${tempFileType}`);
-            setTags(tempTags); console.log(` -> Set Tags (string state) to: ${tempTags}`);
+            
+            // Explicitly log tags and description - extra verification
+            setTags(tempTags); 
+            console.log(` -> Set Tags (string state) to: "${tempTags}"`);
+            console.log(` -> Tags array had ${tagsArray.length} items`);
+            
             setLanguage(tempLanguage); console.log(` -> Set Language state to: ${tempLanguage}`);
             setAccessLevel(tempAccessLevel); console.log(` -> Set AccessLevel state to: ${tempAccessLevel}`);
             setLicense(tempLicense); console.log(` -> Set License state to: ${tempLicense}`);
-            setDescription(tempDescription); console.log(` -> Set Description state to: ${tempDescription}`);
+            
+            setDescription(tempDescription); 
+            console.log(` -> Set Description state to: "${tempDescription.substring(0, 100)}${tempDescription.length > 100 ? '...' : ''}"`);
+            console.log(` -> Description length: ${tempDescription.length} characters`);
+            
             setFinalItemName(tempFinalItemName); console.log(` -> Set FinalItemName state to: ${tempFinalItemName}`);
             setHasManuallyEditedFilename(tempHasManuallyEditedFilename); console.log(` -> Set HasManuallyEditedFilename state to: ${tempHasManuallyEditedFilename}`);
 
@@ -551,7 +511,10 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
              console.log("[MetadataModal Init Effect] isInitialLoadRef set to false (after microtask).");
         });
 
-    }, [initialMetadata, editingItemPath, isOpen, file]); // Dependencies for initialization
+        // Mark as initialized after normal initialization completes
+        setIsFormInitialized(true);
+
+    }, [initialMetadata, editingItemPath, isOpen, file, isFormInitialized, localStorageKey]); // Only depend on isOpen and initialization state
 
     // Reset all form fields
     const resetFormFields = () => {
@@ -583,6 +546,9 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
         setActiveCategory('collection');
         setCurrentStep(0);
         console.log("[MetadataModal Reset] Reset complete.");
+
+        // Clear any saved form data
+        localStorage.removeItem(localStorageKey);
     };
 
     // Update directory path when metadata changes (for NEW uploads)
@@ -735,6 +701,9 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
         setUploadError(null);
         try {
             await onSave(metadata, fullTargetPathForSave, isEditing, file); 
+            
+            // Clear localStorage when saved successfully
+            localStorage.removeItem(localStorageKey);
         } catch (error: any) {
             console.error("Save error in modal:", error);
             setUploadError(error.message || "An unknown error occurred during save.");
@@ -940,6 +909,244 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
         }
     }, [workflowStagePrimary]); // Keep dependencies minimal
 
+    // Add function to analyze document content
+    const analyzeDocumentContent = async (file: File) => {
+        // Skip auto-analysis if editing an existing item
+        if (!file || editingItemPath) {
+            console.log(`[DEBUG] Skipping analysis for editing existing item: ${editingItemPath}`);
+            return;
+        }
+        
+        console.log(`[DEBUG] Starting document analysis for: ${file.name} (${file.type}, size: ${file.size} bytes)`);
+        setIsAnalyzing(true);
+        setAnalyzeError(null);
+        
+        try {
+            console.log(`[DEBUG] Calling fileSystemService.analyzeDocument for: ${file.name}`);
+            const result = await fileSystemService.analyzeDocument(file);
+            console.log(`[DEBUG] Analysis result received:`, result);
+            
+            if (result.success) {
+                console.log(`[DEBUG] Analysis successful with description (first 100 chars): "${result.description?.substring(0, 100)}..."`);
+                console.log(`[DEBUG] Analysis keywords:`, result.keywords);
+                
+                // If description contains error text about encrypted PDFs, ignore it and show a more helpful message
+                if (result.description && (
+                    result.description.includes("appears to be a PDF file") && 
+                    result.description.includes("may be encrypted") ||
+                    result.description.includes("could not be properly extracted")
+                )) {
+                    console.warn(`[DEBUG] Received error message as description: "${result.description}"`);
+                    // Instead of using the error message as description, use a placeholder
+                    setDescription("Document is being processed through Azure Document Intelligence. Please edit this description as needed.");
+                    
+                    // Try again with the same analyze endpoint but with different options
+                    try {
+                        // Create a new FormData to send the file directly
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        
+                        // Use the existing document-analysis endpoint that we know works
+                        console.log(`[DEBUG] Trying direct file upload to analyze endpoint`);
+                        const extractResponse = await fetch('/api/document-analysis/analyze', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (extractResponse.ok) {
+                            const extractResult = await extractResponse.json();
+                            if (extractResult.description) {
+                                console.log(`[DEBUG] Successfully extracted description: ${extractResult.description.substring(0, 100)}...`);
+                                setDescription(extractResult.description);
+                                
+                                if (extractResult.keywords && extractResult.keywords.length > 0) {
+                                    setTags(extractResult.keywords.join(', '));
+                                }
+                            }
+                        }
+                    } catch (extractError) {
+                        console.error(`[DEBUG] Failed to extract text directly:`, extractError);
+                    }
+                } else {
+                    // Normal flow - set description from analysis result
+                    setDescription(result.description);
+                    console.log(`[DEBUG] Description state updated with: "${result.description?.substring(0, 100)}..."`);
+                }
+                
+                // Auto-populate tags if empty or update with confirmation
+                if (!tags && result.keywords.length > 0) {
+                    console.log(`[DEBUG] Setting tags to:`, result.keywords.join(', '));
+                    setTags(result.keywords.join(', '));
+                } else if (tags && result.keywords.length > 0) {
+                    // If there are already tags, merge them with existing tags
+                    const existingTags = tags.split(',').map(t => t.trim()).filter(t => t);
+                    const newTags = result.keywords.filter(k => !existingTags.includes(k));
+                    if (newTags.length > 0) {
+                        const mergedTags = [...existingTags, ...newTags].join(', ');
+                        console.log(`[DEBUG] Merging existing tags with new keywords: "${mergedTags}"`);
+                        setTags(mergedTags);
+                    } else {
+                        console.log(`[DEBUG] No new tags to add, keeping existing: "${tags}"`);
+                    }
+                }
+                
+                setHasAutoAnalyzed(true);
+                console.log(`[DEBUG] hasAutoAnalyzed set to true`);
+                
+                // Remove the auto-navigation to Step 9
+                // const additionalMetadataIndex = categories.findIndex(c => c.id === 'additionalMetadata');
+                // if (additionalMetadataIndex !== -1) {
+                //     console.log(`[DEBUG] Navigating to Step 9 (additionalMetadata) to show description`);
+                //     setCurrentStep(additionalMetadataIndex);
+                //     setActiveCategory('additionalMetadata');
+                //     setActiveField('description');
+                // }
+            } else if (result.error) {
+                console.error(`[DEBUG] Analysis returned error: ${result.error}`);
+                
+                // Check if error is about PDF extraction
+                if (result.error.includes("PDF") && (
+                    result.error.includes("encrypted") || 
+                    result.error.includes("could not be properly extracted") ||
+                    result.error.includes("password-protected")
+                )) {
+                    // Show a more helpful message
+                    setAnalyzeError("This PDF is being processed through Azure Document Intelligence. Please wait a moment and try again.");
+                    
+                    // Try again with direct file upload
+                    try {
+                        // Create FormData object first
+                        const formData = new FormData();
+                        // Then append file to it
+                        formData.append('file', file);
+                        
+                        // Use the existing document-analysis endpoint that we know works
+                        const extractResponse = await fetch('/api/document-analysis/analyze', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (extractResponse.ok) {
+                            // Handle successful extraction
+                            const extractResult = await extractResponse.json();
+                            if (extractResult.description) {
+                                setDescription(extractResult.description);
+                                if (extractResult.keywords && extractResult.keywords.length > 0) {
+                                    setTags(extractResult.keywords.join(', '));
+                                }
+                                setHasAutoAnalyzed(true);
+                                setAnalyzeError(null);
+                            }
+                        }
+                    } catch (extractError) {
+                        console.error(`[DEBUG] Failed direct extraction:`, extractError);
+                    }
+                } else {
+                    setAnalyzeError(result.error);
+                }
+            } else {
+                console.warn(`[DEBUG] Analysis completed but no results or errors returned`);
+            }
+        } catch (error: any) {
+            console.error(`[DEBUG] Exception during analysis:`, error);
+            setAnalyzeError(error.message || 'Failed to analyze document content');
+        } finally {
+            console.log(`[DEBUG] Analysis process completed for: ${file.name}`);
+            setIsAnalyzing(false);
+        }
+    };
+
+    // Modify useEffect to trigger analysis when file is selected
+    useEffect(() => {
+        // Skip if we've already analyzed or if editing existing metadata
+        if (!file || hasAutoAnalyzed || editingItemPath || isInitialLoadRef.current) {
+            console.log(`[DEBUG] Skipping auto-analysis:`, { 
+                hasFile: !!file, 
+                fileName: file?.name,
+                hasAutoAnalyzed, 
+                isEditing: !!editingItemPath, 
+                isInitialLoad: isInitialLoadRef.current 
+            });
+            return;
+        }
+        
+        // Only auto-analyze certain file types
+        const fileExt = path.extname(file.name).toLowerCase();
+        const analyzableTypes = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png', '.txt'];
+        
+        console.log(`[DEBUG] Checking if file type ${fileExt} is analyzable`);
+        if (analyzableTypes.includes(fileExt)) {
+            console.log(`[DEBUG] File type ${fileExt} is analyzable, triggering analysis for ${file.name}`);
+            // Auto-analyze immediately without delay
+            analyzeDocumentContent(file);
+        } else {
+            console.log(`[DEBUG] File type ${fileExt} is not in analyzable types, skipping analysis`);
+        }
+    }, [file, hasAutoAnalyzed, editingItemPath]);
+
+    // Add new effect that triggers document analysis after initial load is complete
+    useEffect(() => {
+        // Wait for initial load to complete and only run for new uploads (not editing)
+        if (isOpen && file && !hasAutoAnalyzed && !editingItemPath && !isInitialLoadRef.current) {
+            console.log(`[DEBUG] Initial load completed, triggering delayed document analysis for: ${file.name}`);
+            
+            // Only auto-analyze certain file types
+            const fileExt = path.extname(file.name).toLowerCase();
+            const analyzableTypes = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png', '.txt'];
+            
+            if (analyzableTypes.includes(fileExt)) {
+                // Trigger analysis with a short delay to ensure UI is responsive first
+                const timer = setTimeout(() => {
+                    console.log(`[DEBUG] Running delayed analysis for ${file.name}`);
+                    analyzeDocumentContent(file);
+                }, 500);
+                
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [isOpen, file, hasAutoAnalyzed, editingItemPath, isInitialLoadRef.current]);
+
+    // Modify the existing useEffect to not depend on isInitialLoadRef (that's handled above)
+    useEffect(() => {
+        // Skip if we've already analyzed or if editing existing metadata
+        if (!file || hasAutoAnalyzed || editingItemPath) {
+            return;
+        }
+        
+        // Only auto-analyze certain file types
+        const fileExt = path.extname(file.name).toLowerCase();
+        const analyzableTypes = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png', '.txt'];
+        
+        console.log(`[DEBUG] File changed, checking if type ${fileExt} is analyzable`);
+        if (analyzableTypes.includes(fileExt)) {
+            console.log(`[DEBUG] File changed and is analyzable, triggering analysis for ${file.name}`);
+            analyzeDocumentContent(file);
+        }
+    }, [file, hasAutoAnalyzed, editingItemPath]); // Remove initialLoadRef from dependencies
+
+    // Add effect to trigger analysis when navigating to Step 9 (Additional Metadata)
+    useEffect(() => {
+        // Check if we're on Step 9 (Additional Metadata) and have a file but haven't analyzed yet
+        const additionalMetadataIndex = categories.findIndex(c => c.id === 'additionalMetadata');
+        
+        if (currentStep === additionalMetadataIndex && 
+            file && 
+            !hasAutoAnalyzed && 
+            !editingItemPath &&
+            !isAnalyzing &&
+            !isInitialLoadRef.current) {
+            
+            console.log(`[DEBUG] User navigated to Additional Metadata step, triggering analysis for: ${file.name}`);
+            
+            const fileExt = path.extname(file.name).toLowerCase();
+            const analyzableTypes = ['.pdf', '.docx', '.doc', '.jpg', '.jpeg', '.png', '.txt'];
+            
+            if (analyzableTypes.includes(fileExt)) {
+                analyzeDocumentContent(file);
+            }
+        }
+    }, [currentStep, file, hasAutoAnalyzed, editingItemPath, isAnalyzing, isInitialLoadRef.current]);
+
     // Render the form field
     const renderFormField = (fieldName: string) => {
         let currentValue: any = ''; 
@@ -1052,7 +1259,7 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
             return (
                 <div className={baseStyles.formGroup}>
                     <label htmlFor={fieldName}>{getFieldLabel(fieldName)}:</label>
-                    <select id={fieldName} value={currentValue} onChange={(e) => setValue(e.target.value)} disabled={isUploading || !jurisdictionType}>
+                    <select id={fieldName} value={currentValue} onChange={e => setValue(e.target.value)} disabled={isUploading || !jurisdictionType}>
                         <option value="">-- Select --</option>
                         {getAvailableJurisdictionNames().map(opt => {
                             // --- ADD OPTION LOG ---
@@ -1160,7 +1367,7 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
              return (
                 <div className={baseStyles.formGroup}>
                     <label htmlFor={fieldName}>{getFieldLabel(fieldName)}:</label>
-                    <select id={fieldName} value={currentValue} onChange={(e) => setValue(e.target.value)} disabled={isUploading || !workflowStagePrimary}>
+                    <select id={fieldName} value={currentValue} onChange={e => setValue(e.target.value)} disabled={isUploading || !workflowStagePrimary}>
                         <option value="">-- Select Sub-Stage --</option>
                         {getAvailableWorkflowSubStages().map(opt => {
                              // --- ADD OPTION LOG ---
@@ -1182,7 +1389,7 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
                 <div className={baseStyles.formGroup}> 
                     <label htmlFor={fieldName}>{getFieldLabel(fieldName)}:</label>
                     {/* Ensure select receives the correct 'value' prop */}
-                    <select id={fieldName} value={currentValue} onChange={(e) => setValue(e.target.value)} disabled={isUploading}>
+                    <select id={fieldName} value={currentValue} onChange={e => setValue(e.target.value)} disabled={isUploading}>
                         <option value="">-- Select --</option>
                         {Array.isArray(metadataOptions[fieldName]) && (metadataOptions[fieldName] as string[]).map((opt: string) => {
                              // --- ADD OPTION LOG ---
@@ -1194,6 +1401,8 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
                     {helperText && <small>{helperText}</small>}
                 </div>
             );
+        } else if (fieldName === 'description') {
+            return renderDescriptionField();
         } else {
             console.log(`[RenderFormField Input] Rendering '${fieldName}' with value prop: "${currentValue}"`);
              return (
@@ -1279,11 +1488,57 @@ const MetadataModal: React.FC<MetadataModalProps> = ({
         );
     };
 
+    // Add a button to manually trigger analysis in the description field
+    const renderDescriptionField = () => {
+        return (
+            <div className={baseStyles.formGroup}>
+                <label htmlFor="description">
+                    {getFieldLabel('description')}:
+                    {hasAutoAnalyzed && (
+                        <span className={styles.autoGeneratedBadge} title="Content was auto-generated from document analysis">
+                            Auto-generated
+                        </span>
+                    )}
+                </label>
+                <div className={styles.descriptionContainer}>
+                    <textarea 
+                        id="description" 
+                        value={description} 
+                        onChange={(e) => setDescription(e.target.value)} 
+                        disabled={isUploading || isAnalyzing} 
+                        rows={4} 
+                        placeholder="Enter description..." 
+                        className={hasAutoAnalyzed ? styles.autoGeneratedContent : ''}
+                    />
+                    {file && !editingItemPath && (
+                        <button
+                            type="button"
+                            onClick={() => analyzeDocumentContent(file)}
+                            disabled={isUploading || isAnalyzing}
+                            className={styles.analyzeButton}
+                            title="Analyze document to auto-generate description and tags"
+                        >
+                            {isAnalyzing ? 'Analyzing...' : 'Auto-Generate'}
+                        </button>
+                    )}
+                </div>
+                {isAnalyzing && <small className={styles.analyzingMessage}>Analyzing document content...</small>}
+                {analyzeError && <small className={styles.analyzeError}>{analyzeError}</small>}
+                {hasAutoAnalyzed && !isAnalyzing && !analyzeError && (
+                    <small className={styles.successMessage}>
+                        Content was auto-generated from document analysis
+                    </small>
+                )}
+                <small>Brief summary of the document contents</small>
+            </div>
+        );
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className={baseStyles.modalOverlay}>
-            <div className={baseStyles.modalContent} style={{ width: '900px', maxWidth: '95%', padding: '0' }}>
+            <div className={baseStyles.modalContent} style={{ width: '900px', maxWidth: '95%', padding: '0' }} onMouseMove={updateLastActivity} onClick={updateLastActivity} onKeyDown={updateLastActivity}>
                  {/* MODIFIED: Modal Header */}
                  <div className={styles.modalHeader} style={{ padding: '15px 25px', borderBottom: '1px solid #e9ecef' }}>
                     {/* ADDED: Container for title and preview */}

@@ -214,6 +214,11 @@ import {
     try {
       console.log(`Generating SAS token for document: ${documentId}`);
       
+      if (!documentId) {
+        console.error("Missing document ID - cannot generate SAS token");
+        return null;
+      }
+      
       // Get Azure credentials
       const { accountName, accountKey } = getAccountInfo();
       const credential = new StorageSharedKeyCredential(accountName, accountKey);
@@ -247,12 +252,19 @@ import {
       const sasToken = generateBlobSASQueryParameters(sasOptions, credential).toString();
       const sasUrl = `${blobClient.url}?${sasToken}`;
       
+      console.log(`Successfully generated SAS URL with token length: ${sasToken.length}`);
       return sasUrl;
     } catch (error) {
       console.error("Error generating SAS token:", error.message);
       return null;
     }
   }
+  
+  // Export the functions for use in the API routes
+  export {
+    findDocumentBlob,
+    generateSasTokenForDocument
+  };
   
   // Main execution - Run the function and log the result
   (async () => {

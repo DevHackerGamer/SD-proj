@@ -3,6 +3,7 @@
  */
 
 import { AnswerResponse } from './types';
+import axios from 'axios';
 
 // Interface for the source object
 export interface Source {
@@ -35,43 +36,41 @@ export async function pingServer(): Promise<boolean> {
  * @param {Object} options - Additional query options
  * @returns {Promise<AnswerResponse>} - The answer and sources
  */
-export async function askQuestion(
-  question: string, 
+export const askQuestion = async (
+  question: string,
   sessionId?: string | null,
-  conversationHistory?: Array<{role: string, content: string}>,
+  conversationHistory?: { role: string; content: string }[],
   metadataFilters?: Record<string, string>,
   options?: {
     enforceExactMatch?: boolean;
     maxResults?: number;
+    systemMessage?: { role: string; content: string };
   }
-): Promise<AnswerResponse> {
+): Promise<AnswerResponse> => {
   try {
-    console.log(`Sending question to API: ${API_BASE_URL}/pinecone/ask`);
-    const response = await fetch(`${API_BASE_URL}/pinecone/ask`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        question,
-        sessionId,
-        conversationHistory,
-        metadataFilters,
-        options
-      }),
+    // Include system message if provided
+    const messages = [...(conversationHistory || [])];
+    
+    // Add system message at the start if provided
+    if (options?.systemMessage) {
+      messages.unshift(options.systemMessage);
+    }
+    
+    const response = await axios.post('/api/question', {
+      question,
+      sessionId,
+      conversationHistory: messages,
+      metadataFilters: metadataFilters || {},
+      enforceExactMatch: options?.enforceExactMatch || false,
+      maxResults: options?.maxResults || 5
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(errorData.error || `Error: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
+    return response.data;
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Error asking question:', error);
     throw error;
   }
-}
+};
 
 /**
  * Query Pinecone for documents

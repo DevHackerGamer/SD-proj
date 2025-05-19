@@ -510,18 +510,45 @@ export const uploadFile = async (req, res) => {
 
     if (filteredBlobMetadata.filetype === 'pdf') {
         console.log(`[Server] /upload - PDF detected for embedding: ${blobName}`);
-        // assume there is a function to extract text from PDF
-        const text = await extractTextFromPDF(req.file.buffer); // Placeholder function
-        if (text) {
-            console.log(`[Server] /upload - Extracted text from PDF for embedding.`);
-            // Embed by sentence for better granularity
-            const sentences = text.split('.').map(s => s.trim()).filter(s => s.length > 0);
-            for (const sentence of sentences) {
-                await embedAndStore(sentence, sasUrl);
+        
+        try {
+            const pdfText = await extractTextFromPDF(req.file.buffer);
+            
+            if (pdfText && pdfText.length > 0) {
+                // Check if the text is too large (over 1MB) to process efficiently
+                if (pdfText.length > 1000000) {
+                    console.warn(`[Server] /upload - PDF text is very large (${pdfText.length} chars), skipping embedding: ${blobName}`);
+                } else {
+                    console.log(`[Server] /upload - Processing ${pdfText.length} chars of text for embedding`);
+                    
+                    // Split text into chunks of ~2000 chars instead of sentences
+                    const CHUNK_SIZE = 2000;
+                    const chunks = [];
+                    
+                    // Create chunks of reasonable size
+                    for (let i = 0; i < pdfText.length; i += CHUNK_SIZE) {
+                        chunks.push(pdfText.substring(i, i + CHUNK_SIZE));
+                    }
+                    
+                    console.log(`[Server] /upload - Created ${chunks.length} chunks for embedding`);
+                    
+                    // Process chunks in batches of 5 to avoid flooding Pinecone
+                    const BATCH_SIZE = 5;
+                    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+                        const batch = chunks.slice(i, i + BATCH_SIZE);
+                        const batchPromises = batch.map(chunk => embedAndStore(chunk, sasUrl));
+                        await Promise.all(batchPromises);
+                        console.log(`[Server] /upload - Embedded batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(chunks.length/BATCH_SIZE)}`);
+                    }
+                    
+                    console.log(`[Server] /upload - Completed embedding for "${blobName}"`);
+                }
+            } else {
+                console.warn(`[Server] /upload - No text extracted from PDF, skipping embeddings: ${blobName}`);
             }
-            console.log(`[Server] /upload - Embedded and stored in Pinecone.`);
-        } else {
-            console.warn(`[Server] /upload - No text extracted from PDF for embedding.`);
+        } catch (pdfError) {
+            console.error(`[Server] /upload - Error processing PDF for embeddings, but upload succeeded: ${pdfError.message}`);
+            // Don't fail the entire upload if just the PDF processing fails
         }
     }
 
@@ -1856,4 +1883,11 @@ export const checkAndDeleteEmptyDirectory = async (req, res) => {
         res.status(500).json({ message: 'Failed to check or delete directory.', error: error.message });
     }
 };
+
+// Import the metadata search functionality from the separate file
+import { searchByMetadata } from './blobcontrollerfiltermetadata.js';
+
+// Export the imported searchByMetadata function
+export { searchByMetadata };
+
 // ... existing code ...

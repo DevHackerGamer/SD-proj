@@ -108,7 +108,7 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ item, onClose }) =>
           return <img src={sasUrl} alt={item.name} style={{ maxWidth: '100%', maxHeight: '80vh' }} />;
         }
         if (item?.contentType === 'application/pdf') {
-          return <iframe src={sasUrl} title={item.name} style={{ width: '100%', height: '80vh', border: 'none' }}></iframe>;
+          return <iframe  allow="fullscreen" src={sasUrl} title={item.name} style={{ width: '100%', height: '80vh', border: 'none' }}></iframe>;
         }
         // Add other preview types if needed (e.g., video, audio)
         // ...
