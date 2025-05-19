@@ -68,6 +68,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          data-testid="search-input"   
         />
         
         {query && (
@@ -75,6 +76,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
             className={styles.searchClearButton} 
             onClick={clearSearch}
             title="Clear search"
+            data-testid="clear-button" 
           >
             <FaTimes />
           </button>
@@ -85,6 +87,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
           onClick={handleSearch}
           disabled={isSearching}
           title="Search"
+          data-testid="search-button" 
         >
           <FaSearch />
         </button>
@@ -93,6 +96,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
           className={`${styles.filterButton} ${showFilters ? styles.filterActive : ''}`} 
           onClick={() => setShowFilters(!showFilters)}
           title="Show filters"
+          data-testid="filter-button" 
         >
           <FaFilter />
         </button>
@@ -162,12 +166,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
                   maxSize: null
                 });
               }}
+              data-testid="reset-filters-button" 
             >
               Reset Filters
             </button>
             <button 
               className={styles.filterApply} 
               onClick={handleSearch}
+              data-testid="-apply-filters-button" 
             >
               Apply Filters
             </button>

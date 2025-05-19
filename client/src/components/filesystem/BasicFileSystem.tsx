@@ -1717,8 +1717,13 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
           onNavigateToPath={navigateToPath}
         />
 
-        <StatusDisplay isLoading={isLoading} error={error} />
-
+        <StatusDisplay isLoading={isLoading} error={error} data-test-id="error-message"/>
+        //Rendering error to catch when testing @Lawrence140
+        {error && (
+          <div data-testid="error-message">
+            {error}
+          </div>
+        )}
         {/* Add filter stats banner when filtering is active */}
         {isFiltering && (
           <div className={styles.filterBanner}>
@@ -1771,6 +1776,7 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
             onEditMetadata={handleEditMetadataForItem}
             highlightedPath={highlightedPath}
             isFiltering={isFiltering} // Pass filtering state to show visual indicators
+            data-test-id="error-message"
           />
         )}
 
@@ -1785,6 +1791,7 @@ const BasicFileSystem = forwardRef<FileSystemRefType, {}>((props, ref) => {
           isLoading={isPropertiesLoading}
           error={propertiesError}
           onClose={handleClosePropertiesModal}
+          data-test-id="error-message"
         />
 
         {/* --- Render Metadata Modal --- */}

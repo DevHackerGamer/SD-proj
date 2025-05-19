@@ -28,6 +28,19 @@ type FileInfo = {
   size?: number;
 };
 
+  //@Lwarence140 exported the functions same as in AdminPage export to use for admin testing to cover some lines 
+  export const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  };
+
+  // Format date for display
+  export const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleString();
+  };
+
 const AdminPage = () => {
   const { isSignedIn, sessionId } = useAuth();
   const { signOut } = useClerk();
@@ -183,8 +196,9 @@ const AdminPage = () => {
     setIsMetadataModalOpen(true);
   };
 
-  // Format file size for display
-  const formatFileSize = (bytes: number): string => {
+  // Format file size for display 
+  //@Lwarence140 exported the function to use for admin testing to cover some lines 
+   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' bytes';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -192,7 +206,7 @@ const AdminPage = () => {
   };
 
   // Format date for display
-  const formatDate = (dateString: string): string => {
+   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleString();
   };
 
@@ -317,8 +331,11 @@ const AdminPage = () => {
           >
             File Manager
           </button>
-
-          
+          {/* //@Lawrence140 =forced error for testing file manger fail */}
+          <button data-testid="forced-errorBttn" onClick={() => setError('This is a file manager test error!')}>
+              Force Error
+          </button>
+          {error && <div data-testid="error-message"></div>}
         </div>
 
         {/* Show either simple upload, file list, or advanced file manager based on toggle */}
@@ -330,7 +347,7 @@ const AdminPage = () => {
             boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
             width: '100%',
           }}>
-            <h2 style={{ marginTop: 0, color: '#333' }}>Upload Files</h2>
+            <h2 data-testid="upload-files-heading" style={{ marginTop: 0, color: '#333' }}>Upload Files</h2>
             
             <div
               {...getRootProps()}
@@ -344,7 +361,7 @@ const AdminPage = () => {
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <input {...getInputProps()} />
+              <input data-testid="file-input" {...getInputProps()} />
               {file ? (
                 <p
                   style={{
@@ -414,7 +431,9 @@ const AdminPage = () => {
               </button>
 
               {status && (
-                <p style={{ 
+                <p
+                  data-testid="file-upload-status" 
+                  style={{ 
                   margin: '10px 0', 
                   padding: '10px', 
                   borderRadius: '4px',
@@ -427,6 +446,7 @@ const AdminPage = () => {
                 </p>
               )}
             </div>
+
           </div>
         )}
         
@@ -447,7 +467,9 @@ const AdminPage = () => {
                 <p>Loading files...</p>
               </div>
             ) : error ? (
-              <div style={{ 
+              <div
+                data-testid="error-message"
+                style={{ 
                 padding: '20px', 
                 backgroundColor: '#f8d7da', 
                 color: '#721c24',
@@ -523,6 +545,7 @@ const AdminPage = () => {
                         Download
                       </a>
                       <button
+                        data-testid = "deleteBttn"
                         onClick={() => handleDeleteFile(file.name)}
                         style={{
                           background: 'none',
@@ -569,7 +592,7 @@ const AdminPage = () => {
             overflow: 'hidden',
           }}>
             <BasicFileSystem 
-              ref={fileSystemRef} 
+              ref={fileSystemRef}
             />
           </div>
         )}

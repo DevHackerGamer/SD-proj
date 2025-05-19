@@ -182,20 +182,24 @@ const FileListDisplay: React.FC<FileListDisplayProps> = ({
           return (
             <div
               key={item.path}
-              id={`file-item-${item.path}`} // Add unique ID for scrolling/highlighting
+              id={`file-item-${item.path}`} //@Lawrence140 Add unique ID for scrolling/highlighting
+              data-testid = {`file-row-${item.path}`}
               className={rowClassName}
-              // Add onClick handler to select the item on single click
-              onClick={(e) => {
-                // Don't select on checkbox click - that's handled separately
-                if ((e.target as HTMLElement).closest(`.${styles.itemCheckbox}`)) {
-                  return;
-                }
-                // Don't select on button click
-                if ((e.target as HTMLElement).closest('button')) {
-                  return;
-                }
-                // Toggle selection on click with false for isCheckboxClick
-                onItemSelect(item.path, !isSelected, false);
+              // Add onClick handler to select the item on single click @Lawrence140 commented out this code for testing removed condinal logic to be able to select item when double clicked
+              // onClick={(e) => {
+              //   // Don't select on checkbox click - that's handled separately
+              //   if ((e.target as HTMLElement).closest(`.${styles.itemCheckbox}`)) {
+              //     return;
+              //   }
+              //   // Don't select on button click
+              //   if ((e.target as HTMLElement).closest('button')) {
+              //     return;
+              //   }
+              //   // Toggle selection on click with false for isCheckboxClick
+              //   onItemSelect(item.path, !isSelected, false);
+              // }}
+              onClick={() => {
+                  onItemSelect(item.path, !isSelected, false);
               }}
               onDoubleClick={() => !isRenamingThis && onItemDoubleClick(item)}
               onContextMenu={(e) => !isRenamingThis && onContextMenu(e, item)}

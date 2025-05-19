@@ -3,6 +3,7 @@ import type { BlobItem } from '../types';
 import { getIconForFile } from '../utils/getIconForFile'; // Assuming you have this util
 import styles from '../BasicFileSystem.module.css';
 import { FaTrashAlt, FaDownload } from 'react-icons/fa'; // Import trash and download icons
+import clsx from 'clsx';
 
 interface FileListItemProps {
   item: BlobItem;
@@ -125,14 +126,14 @@ const FileListItem: React.FC<FileListItemProps> = ({
   };
   // --- End Context Menu ---
 
-  // Combine classes conditionally
-  const itemClasses = `
-    ${styles.fileItem}
-    ${isSelected ? styles.selected : ''} {/* Add selected class */}
-    ${isDragged ? styles.dragging : ''}
-    ${isDragOver ? styles.dragOver : ''}
-    ${isMarkedForMove ? styles.markedForMove : ''} // Add class if marked for move
-  `;
+  // Combine classes conditionally =>@Lawrence140 moified this for testing it was returning invalid class for class name and had problem finding classname npm install clsx and edit stucture
+  const itemClasses = clsx(
+    styles.fileItem,
+    isSelected && styles.selected, // Add selected class 
+    isDragged && styles.dragging, 
+    isDragOver && styles.dragOver, 
+    isMarkedForMove && styles.markedForMove  // Add class if marked for move
+);
 
   // --- Drag Handlers ---
   const handleDragStartInternal = (event: React.DragEvent) => {
@@ -175,6 +176,7 @@ const FileListItem: React.FC<FileListItemProps> = ({
 
   return (
     <li
+      data-testid = {`file-item-${item.name}`}
       className={itemClasses}
       onDoubleClick={handleDoubleClick}
       onContextMenu={handleContextMenuInternal} // Attach context menu handler
@@ -191,12 +193,13 @@ const FileListItem: React.FC<FileListItemProps> = ({
     >
       {/* --- Add Checkbox --- */}
       <input
+        data-testid="checkbox-id"
         type="checkbox"
         className={styles.selectCheckbox}
         checked={isSelected && !isRenaming} // Uncheck visually during rename
         onChange={handleCheckboxChange}
         onClick={(e) => e.stopPropagation()} // Prevent clicks bubbling to li's double-click
-        disabled={isLoading || isRenaming} // Disable during rename
+        disabled={isLoading || isRenaming} // Disable during rename this rename was not nice when testing since it literaly chnages tage to something else mkes it hard to keep track of @Lawrence140
       />
       {/* --- End Checkbox --- */}
 
