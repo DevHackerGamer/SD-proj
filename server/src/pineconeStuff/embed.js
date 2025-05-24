@@ -28,6 +28,19 @@ loadLocalModel().then(model => {
   console.warn("[Embed] Failed to initialize local model:", err.message);
 });
 
+// 1) Utility to split text into overlapping chunks
+export function splitText(text, chunkSize = 1000, overlap = 200) {
+  const chunks = [];
+  let start = 0;
+  while (start < text.length) {
+    const end = Math.min(text.length, start + chunkSize);
+    chunks.push(text.slice(start, end));
+    start = end - overlap;      // step back by overlap
+    if (start < 0) start = 0;
+  }
+  return chunks;
+}
+
 // Function to extract features from text
 export async function extractFeatures(textVector) {
   try {
@@ -62,7 +75,7 @@ export async function extractFeatures(textVector) {
     console.error("[Embed] Error generating embeddings:", error.message);
     // Return a random embedding as a last resort to avoid crashing
     console.warn("[Embed] Generating random fallback embedding");
-    return Array(1536).fill(0).map(() => Math.random() * 2 - 1);
+    return Array(384).fill(0).map(() => Math.random() * 2 - 1);
   }
 }
 

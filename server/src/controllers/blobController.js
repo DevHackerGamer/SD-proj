@@ -11,7 +11,7 @@ import stream from 'stream'; // Import stream for pipeline
 import crypto from 'crypto'; // Import crypto for UUID generation
 import { formatMetadataForAzure, updateMetadataJsonFile } from '../utils/metadataHelper.js'; // Assuming helper exists
 import { v4 as uuidv4 } from 'uuid'; // For generating documentId
-import { embedAndStore } from '../pineconeStuff/pineconeServe.js';
+import { deleteByPrefix, embedAndStore } from '../pineconeStuff/pineconeServe.js';
 import { extractTextFromPDF } from '../pineconeStuff/embed.js';
 
 // --- Configuration ---
@@ -536,7 +536,7 @@ export const uploadFile = async (req, res) => {
                     const BATCH_SIZE = 5;
                     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
                         const batch = chunks.slice(i, i + BATCH_SIZE);
-                        const batchPromises = batch.map(chunk => embedAndStore(chunk, sasUrl));
+                        const batchPromises = batch.map(chunk => embedAndStore(chunk, documentId));
                         await Promise.all(batchPromises);
                         console.log(`[Server] /upload - Embedded batch ${Math.floor(i/BATCH_SIZE) + 1}/${Math.ceil(chunks.length/BATCH_SIZE)}`);
                     }
@@ -648,13 +648,24 @@ export const deleteItem = async (req, res) => {
       const prefix = effectiveItemPath; // Use path with guaranteed trailing slash
       console.log(`[Server] /delete - Deleting contents of directory: "${prefix}"`);
       // ... (rest of existing directory deletion logic: listBlobsFlat, deleteBlob loop) ...
-      const blobs = client.listBlobsFlat({ prefix });
+      const blobs = client.listBlobsFlat({ prefix , includeMetadata: true });
       let deletedCount = 0;
       for await (const blob of blobs) {
         try {
+    // fetch full props so metadata.documentid is populated
+            const blobClient2 = client.getBlobClient(blob.name);
+            const props       = await blobClient2.getProperties();
+            const docId       = props.metadata?.documentid;
+
+
           await client.deleteBlob(blob.name);
           deletedCount++;
           console.log(`[Server] /delete - Deleted blob within directory: ${blob.name}`);
+
+          if(docId){
+            await deleteByPrefix(`${docId}-`, 'Chunky');
+            console.log(`[Server] /delete - Deleted embeddings for document ID: ${docId}`);
+          }
         } catch (delError) {
            console.warn(`[Server] /delete - Failed to delete blob ${blob.name} within directory:`, delError.message);
            // Decide if this should halt the process or just log
@@ -714,6 +725,8 @@ export const deleteItem = async (req, res) => {
       // Delete single blob (use original itemPath here as it was confirmed to be a file)
       const blobClientForFile = client.getBlockBlobClient(itemPath);
       const deleteResponse = await blobClientForFile.deleteIfExists();
+      const props     = await blobClientForFile.getProperties();
+      const docId     = props.metadata?.documentid;
       if (!deleteResponse.errorCode) {
         console.log(`[Server] /delete - Blob deleted: "${itemPath}"`);
 
@@ -727,6 +740,11 @@ export const deleteItem = async (req, res) => {
             // Decide if this should be a partial success or failure. Let's return success but log warning.
         }
         // --- End Update ---
+
+        if (docId) {
+            await deleteByPrefix(`${docId}-`, 'Chunky');
+            console.log(`[Server] /delete - Deleted Pinecone vectors for documentId=${docId}`);
+        }
 
         res.status(200).json({ message: `Successfully deleted "${itemPath}".` });
       } else {

@@ -4,6 +4,7 @@ import { generateChatCompletion } from '../azure/openai.js';
 import { getDocumentContent } from '../azure/blobStorage.js';
 import { generateSasUrl } from '../azure/sasTokenGenerator.js';
 import { documentExists } from '../azure/blobStorage.js';
+import { generateSasTokenForDocument } from '../utils/generateDocumentSas.js';
 
 const router = express.Router();
 
@@ -386,12 +387,12 @@ router.post('/ask', async (req, res) => {
         : limitToRelevantSources(enhancedDocs, question, metadataFilters);
     
     // Fix document links and generate SAS URLs
-    const processedSources = await Promise.all(filteredDocs.map(async (doc, index) => {
-      let sourceLink = doc.link;
+    const processedSources = await Promise.all(enhancedDocs.map(async (doc, index) => {
+      let docID = doc.link;
       let sasUrl = null;
       
       // Skip if no link
-      if (!sourceLink) {
+      if (!docID) {
         return {
           // Safely handle doc.text that might not be a string
           text: getTextPreview(doc.text),
@@ -402,17 +403,17 @@ router.post('/ask', async (req, res) => {
       }
       
       // Fix the document path to remove localhost if present
-      const fixedDocPath = fixDocumentPath(sourceLink);
-      console.log(`[RAG] Original doc path: ${sourceLink}`);
+      const fixedDocPath = fixDocumentPath(docID);
+      console.log(`[RAG] Original doc path: ${docID}`);
       console.log(`[RAG] Fixed doc path: ${fixedDocPath}`);
       
       // Generate SAS URL for the document
       try {
-        sasUrl = await generateSasUrl(fixedDocPath);
+        sasUrl = await generateSasTokenForDocument(fixedDocPath);
         
         if (!sasUrl) {
           console.log(`[RAG] Could not generate SAS URL for ${fixedDocPath}, trying original path`);
-          sasUrl = await generateSasUrl(sourceLink);
+          sasUrl = await generateSasTokenForDocument(docID);
         }
       } catch (error) {
         console.error(`[RAG] Error generating SAS URL:`, error.message);
@@ -421,8 +422,8 @@ router.post('/ask', async (req, res) => {
       return {
         // Safely handle doc.text that might not be a string
         text: getTextPreview(doc.text),
-        link: fixedDocPath || sourceLink,
-        originalLink: sourceLink,
+        link: sasUrl,
+        originalLink: sasUrl,
         sasUrl: sasUrl,
         documentNumber: index + 1
       };

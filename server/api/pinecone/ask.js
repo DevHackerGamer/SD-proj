@@ -1,3 +1,4 @@
+import { generateSasTokenForDocument } from '../../src/utils/generateDocumentSas.js';
 const { BlobServiceClient } = require('@azure/storage-blob');
 const dotenv = require('dotenv');
 const path = require('path');
@@ -58,7 +59,7 @@ module.exports = async (req, res) => {
         content: `You are a helpful assistant specializing in South African constitutional history and legal documents. 
         Answer the user's question based ONLY on the provided document contexts. 
         If the answer cannot be found in the documents, say "I don't have enough information to answer that question."
-        Cite your sources by referring to the document numbers in your answer.`
+        Cite your sources by referring to the document titles in your answer.`
       },
       {
         role: "user",
@@ -81,11 +82,17 @@ module.exports = async (req, res) => {
     const answer = completion.choices[0].message.content;
     
     // Format sources for citation
-    const sources = enhancedDocs.map(doc => ({
-      text: doc.text.substring(0, 150) + '...', // Preview of text
-      link: doc.link || null,
-    }));
-    
+    // Build sources array
+    const sources = await Promise.all(
+      enhancedDocs.map(async doc => {
+        const textSnippet = (doc.metadata.text || '').substring(0, 150) + '…';
+        // pull filename out of metadata and await the SAS URL
+        const link = await generateSasTokenForDocument(
+          doc.metadata.filename
+        );
+        return { text: textSnippet, link };
+      })
+    );
     console.log(`[RAG] Sending response back to user`);
     
     res.status(200).json({

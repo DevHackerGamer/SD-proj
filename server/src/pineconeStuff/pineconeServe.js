@@ -12,7 +12,8 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env.local') });
 
 // Pinecone configuration from environment variables
 const PINECONE_API_KEY = process.env.PINECONE_API_KEY;
-const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'archive-v1';
+const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || 'archive-pro-rag';
+const PINECONE_INDEX_HOST = process.env.PINECONE_INDEX_HOST
 
 console.log("[Pinecone] Initializing Pinecone client...");
 console.log(`[Pinecone] Index: ${PINECONE_INDEX_NAME}`);
@@ -22,18 +23,21 @@ let pc;
 let index;
 let pineconeInitialized = false;
 
+
 try {
   pc = new Pinecone({
     apiKey: PINECONE_API_KEY,
   });
   
-  index = pc.index(PINECONE_INDEX_NAME);
+  index = pc.index(PINECONE_INDEX_NAME, PINECONE_INDEX_HOST);
+  
   
   pineconeInitialized = true;
   console.log("[Pinecone] Pinecone client initialized");
 } catch (error) {
   console.error("[Pinecone] Failed to initialize Pinecone client:", error.message);
 }
+const namespace = pc.index(PINECONE_INDEX_NAME, PINECONE_INDEX_HOST).namespace("Chunky")
 
 // Mock in-memory storage as a fallback when Pinecone is unavailable
 const memoryVectorStore = [];
@@ -117,7 +121,7 @@ export async function embedAndStore(text, fileName) {
     // Try to store in Pinecone first
     if (pineconeInitialized && index) {
       try {
-        const response = await index.upsert([vectorEntry]);
+        const response = await namespace.upsert([vectorEntry]);
         console.log("[Pinecone] Text embedded and stored in Pinecone.");
         return response;
       } catch (pineconeError) {
@@ -148,9 +152,9 @@ export async function queryPinecone(queryText) {
     // Try to query Pinecone first
     if (pineconeInitialized && index) {
       try {
-        const queryResponse = await index.query({
+        const queryResponse = await namespace.query({
           vector: features,
-          topK: 5,
+          topK: 2,
           includeMetadata: true,
         });
         
@@ -849,5 +853,36 @@ export function sortAndFilterByRelevance(docs, threshold = 0.6) {
 }
 
 
+/**
+ * Delete all vectors whose IDs start with `prefix` in the given namespace.
+ * Uses listPaginated + deleteMany (serverless indexes only).
+ */
+export async function deleteByPrefix(prefix, namespace = 'Chunky') {
+  if (!pineconeInitialized || !index) {
+    console.warn('[Pinecone] Not initialized, skipping deleteByPrefix');
+    return { deletedCount: 0 };
+  }
+
+  const ns = index.namespace(namespace);
+  let cursor = undefined;
+  const allIds = [];
+
+  // page through all IDs that start with prefix
+  do {
+    const page = await ns.listPaginated({ prefix, limit: 100, cursor });
+    allIds.push(...page.ids);
+    cursor = page.nextPageToken;
+  } while (cursor);
+
+  if (allIds.length === 0) {
+    console.log(`[Pinecone] No vectors found with prefix "${prefix}"`);
+    return { deletedCount: 0 };
+  }
+
+  // batch‐delete them
+  await ns.deleteMany(allIds);
+  console.log(`[Pinecone] Deleted ${allIds.length} vectors with prefix "${prefix}"`);
+  return { deletedCount: allIds.length };
+}
 
 

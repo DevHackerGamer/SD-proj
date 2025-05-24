@@ -121,7 +121,7 @@ export async function generateEmbeddings(input) {
       // This is just for demonstration - it won't give good semantic search results
       const embeddings = sanitizedInput.map(text => {
         const seed = text.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const vector = Array(1536).fill(0).map((_, i) => {
+        const vector = Array(384).fill(0).map((_, i) => {
           // Simple pseudo-random but deterministic function
           const value = Math.sin(seed * (i + 1)) * 0.5;
           return value;

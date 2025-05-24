@@ -108,7 +108,7 @@ import {
    * Search for the document using metadata
    * This is more reliable than filename searching if your app stores document IDs in metadata
    */
-  async function searchByMetadata(containerClient, documentId) {
+  export async function searchByMetadata(containerClient, documentId) {
     console.log(`Searching for document by metadata...`);
     
     let foundBlob = null;
@@ -263,38 +263,9 @@ import {
   // Export the functions for use in the API routes
   export {
     findDocumentBlob,
-    generateSasTokenForDocument
+    generateSasTokenForDocument,
+    connectionString,
+    containerName,
+    getAccountInfo,
   };
   
-  // Main execution - Run the function and log the result
-  (async () => {
-    try {
-      console.log("=== Document SAS Token Generator ===");
-      console.log(`Container: ${containerName}`);
-      console.log(`Document ID: ${DOCUMENT_ID}`);
-      console.log("-----------------------------------");
-      
-      const sasUrl = await generateSasTokenForDocument(DOCUMENT_ID);
-      if (sasUrl) {
-        console.log("\n✅ SAS URL for document access:");
-        console.log(sasUrl);
-        
-        // Save to a file
-        fs.writeFileSync(
-          path.join(process.cwd(), 'document-sas-url.txt'), 
-          sasUrl, 
-          'utf8'
-        );
-        console.log("\nURL also saved to document-sas-url.txt");
-      } else {
-        console.error("\n❌ Failed to generate SAS URL.");
-        console.log("\nTroubleshooting suggestions:");
-        console.log("1. Verify the document ID is correct");
-        console.log("2. Check if the document exists in the Azure Storage container");
-        console.log("3. Confirm your Azure credentials are valid");
-        console.log("4. Use Azure Storage Explorer to browse container contents");
-      }
-    } catch (error) {
-      console.error("Script execution failed:", error);
-    }
-  })();
