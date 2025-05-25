@@ -123,10 +123,10 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ item, onClose }) =>
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      <div role = "dialog" data-testid="modal-content" className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <h3>Preview: {item.name}</h3>
         <button className={styles.modalCloseButton} onClick={onClose}>×</button>
-        <div className={styles.previewArea}>
+        <div data-testid=" preview-area"className={styles.previewArea}>
           {renderContent()}
         </div>
       </div>

@@ -101,18 +101,30 @@ const HomePage = () => {
         } overflow-hidden rounded-lg border border-gray-700`}
         onClick={() => !chatExpanded && setChatExpanded(true)}
       >
-        {chatExpanded ? (
+      {chatExpanded ? (
+        <>
           <DocumentChat 
             initialInput={chatInput}
             onInputChange={handleChatInputChange}
             autoSubmit={autoSubmit}
             onSubmitComplete={handleSubmitComplete}
           />
-        ) : (
-          <div className="flex items-center justify-center h-full bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300">
-            <p>Click anywhere or press Enter to start searching archives...</p>
-          </div>
-        )}
+          {/* Add this input tag for testing */}
+          <input data-testid="search-input"></input>
+          {/* Add this button for testing */}
+          <button 
+            data-testid="search-button"
+            onClick={() => setAutoSubmit(true)}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            Search
+          </button>
+        </>
+      ) : (
+        <div className="flex items-center justify-center h-full bg-gray-800 hover:bg-gray-700 transition-colors text-gray-300">
+          <p>Click anywhere or press Enter to start searching archives...</p>
+        </div>
+      )}
       </div>
       
       {/* Chat Log Section - Enhanced with better formatting and animation */}

@@ -6,23 +6,25 @@
     "shared/**/*",
     "client/vite.config.ts",
     "client/src/types/*.d.ts",
-    "client/CustomFileManager"
+    "client/CustomFileManager",
+    "client/src/setupTests.ts" //Lawrence added for testing
   ],
   "compilerOptions": {
     // ... existing compilerOptions ...
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "types": ["node"],  // Removed vite/client as it's causing issues
+    "types": ["node","jest"],  //@Larence addded jest for tetsting Removed vite/client as it's causing issues
     "target": "ES2022",
     "module": "ES2022",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "jsx": "react-jsx",
+    "outDir": "./dist",//for testing
     "rootDirs": [".", "./.react-router/types"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./client/src/*"]
     },
     "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+    "verbatimModuleSyntax": false,//made flase for testing
     "noEmit": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

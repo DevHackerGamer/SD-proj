@@ -1,0 +1,1 @@
+export const VITE_USE_MOCK_ANALYSIS = import.meta.env.VITE_USE_MOCK_ANALYSIS === 'true';

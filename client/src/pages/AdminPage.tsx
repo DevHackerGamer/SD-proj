@@ -53,6 +53,19 @@ type FileInfo = {
   size?: number;
 };
 
+    // Format file size for display
+  export const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  };
+
+  // Format date for display
+  export const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleString();
+  };
+
 const AdminPage = () => {
   const { isSignedIn, sessionId } = useAuth();
   const { signOut } = useClerk();
@@ -689,6 +702,7 @@ const AdminPage = () => {
           </button>
          
           <button
+          data-testid="file-manager-button"
             onClick={() => setActiveTab('fileManager')}
             className={`tab-button ${activeTab === 'fileManager' ? 'active' : ''}`}
           >
@@ -701,6 +715,13 @@ const AdminPage = () => {
           >
             Manage Metadata Fields
           </button>
+
+          {/* //@Lawrence140 =forced error for testing file manger fail */}
+          <button data-testid="forced-errorBttn" onClick={() => setError('This is a file manager test error!')}>
+              Force Error
+          </button>
+          {error && <div data-testid="error-message"></div>}
+
         </div>
 
         {/* Show either simple upload, file list, or advanced file manager based on toggle */}
@@ -713,8 +734,9 @@ const AdminPage = () => {
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
               width: '100%',
-            }}
-          >
+            }}>
+                //add output to catch for testing
+                <h2 data-testid="upload-files-heading" style={{ marginTop: 0, color: '#333' }}>Upload Files</h2>
             <h2 className="animated-title">
               <span>U</span><span>p</span><span>l</span><span>o</span><span>a</span><span>d</span>
               <span> </span>
@@ -727,7 +749,7 @@ const AdminPage = () => {
               onMouseEnter={() => setUploadAreaHover(true)}
               onMouseLeave={() => setUploadAreaHover(false)}
             >
-              <input {...getInputProps()} />
+              <input data-testid="file-input"{...getInputProps()} />
               {file ? (
                 <div className="upload-content file-selected">
                   {imagePreview ? (
@@ -776,6 +798,7 @@ const AdminPage = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '20px' }}>
               <button
+                data-testid="upload-button"
                 onClick={handleUpload}
                 disabled={!file || isUploading}
                 className="enhanced-upload-button"
@@ -821,7 +844,9 @@ const AdminPage = () => {
               )}
 
               {status && (
-                <p style={{ 
+                <p
+                  data-testid="file-upload-status" 
+                  style={{ 
                   margin: '10px 0', 
                   padding: '10px', 
                   borderRadius: '4px',
@@ -1010,6 +1035,7 @@ const AdminPage = () => {
         {/* Add MetadataModal component */}
         {isMetadataModalOpen && (
           <MetadataModal
+            data-testid="metadata-modal"
             file={fileToUpload}
             isOpen={isMetadataModalOpen}
             onClose={() => {

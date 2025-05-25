@@ -61,6 +61,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
     <div className={styles.searchContainer}>
       <div className={styles.searchInputContainer}>
         <input
+          data-testid="search-input"
           ref={searchInputRef}
           type="text"
           className={styles.searchInput}
@@ -72,6 +73,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
         
         {query && (
           <button 
+            data-testid="clear-button"
             className={styles.searchClearButton} 
             onClick={clearSearch}
             title="Clear search"
@@ -81,6 +83,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
         )}
         
         <button 
+          data-testid="search-button"
           className={styles.searchButton} 
           onClick={handleSearch}
           disabled={isSearching}
@@ -89,7 +92,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isSearching }) => {
           <FaSearch />
         </button>
         
-        <button 
+        <button
+          data-testid="filter-button" 
           className={`${styles.filterButton} ${showFilters ? styles.filterActive : ''}`} 
           onClick={() => setShowFilters(!showFilters)}
           title="Show filters"
