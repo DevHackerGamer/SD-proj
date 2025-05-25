@@ -20,7 +20,7 @@ React testing library
 
 STRUCTURE:
 a) find test files in _tests_
-b) ensure babel.config.cjs is good to all typescripts testing
+b) ensure babel.config.cjs is good to allow typescripts testing
 c) ensure jest.config.cjs is good to call you setupTest and to mock css styles
 d) ensure setupTests.ts is good to get all you testing libraries
 e) TEST are ran on branch CoverageDone
