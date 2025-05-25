@@ -213,15 +213,42 @@ const updateMetadataJson = async (containerClient, directoryPath, itemEntry, act
     } else if (action === 'remove') {
         // Remove the entry if it exists (check both files and folders)
         if (fileExists) {
+            // 1) grab the file’s stored metadata before you delete
+            const fileMeta = metadataJson.files[itemEntry.name];
+            const docId    = fileMeta?.documentId; // Extract documentId from file metadata
+            console.log(`[Metadata Helper] Removing file entry for "${itemEntry.name}" with documentId=${docId}.`);
+            if (docId) {
+            try {
+                await deleteByPrefix(`${docId}#`, 'Chunky');
+                console.log(`[Metadata Helper] Deleted Pinecone vectors for documentId=${docId}`);
+            } catch (pineErr) {
+                console.warn(`[Metadata Helper] Pinecone delete failed for documentId=${docId}:`, pineErr.message);
+            }
+            }
+            // 2) now remove from metadata.json
             delete metadataJson.files[itemEntry.name];
             metadataChanged = true;
             console.log(`[Metadata Helper] Removed file entry for "${itemEntry.name}".`);
-        } else if (folderExists) { // Check folders if not found in files
+        
+        } else if (folderExists) {
+            // same for folders if you also embed folders
+            const folderMeta = metadataJson.folders[itemEntry.name];
+            console.log(`[Metadata Helper] Found folder metadata for "${itemEntry.name}":`, folderMeta);
+            const docId      = folderMeta?.documentId;
+            if (docId) {
+            try {
+                await deleteByPrefix(`${docId}#`, 'Chunky');
+                console.log(`[Metadata Helper] Deleted Pinecone vectors for documentId=${docId}`);
+            } catch (pineErr) {
+                console.warn(`[Metadata Helper] Pinecone delete failed for documentId=${docId}:`, pineErr.message);
+            }
+            }
             delete metadataJson.folders[itemEntry.name];
             metadataChanged = true;
             console.log(`[Metadata Helper] Removed folder entry for "${itemEntry.name}".`);
+        
         } else {
-            console.log(`[Metadata Helper] Entry for "${itemEntry.name}" not found in files or folders. Skipping removal.`);
+            console.log(`[Metadata Helper] Entry for "${itemEntry.name}" not found. Skipping removal.`);
         }
     }
     // --- End modify ---
@@ -649,29 +676,51 @@ export const deleteItem = async (req, res) => {
       console.log(`[Server] /delete - Deleting contents of directory: "${prefix}"`);
       // ... (rest of existing directory deletion logic: listBlobsFlat, deleteBlob loop) ...
       const blobs = client.listBlobsFlat({ prefix , includeMetadata: true });
+
+      const docIds = new Set();
       let deletedCount = 0;
       for await (const blob of blobs) {
         try {
-    // fetch full props so metadata.documentid is populated
-            const blobClient2 = client.getBlobClient(blob.name);
-            const props       = await blobClient2.getProperties();
-            const docId       = props.metadata?.documentid;
+    // // fetch full props so metadata.documentid is populated
+    //            const blobClient2 = client.getBlobClient(blob.name);
+    //             const prop  = await blobClient2.getProperties();
 
+    // // 2) extract documentId correctly
+    // const docId = props.metadata?.documentid || blob.metadata?.documentid;
+    // console.log(
+    //   `[Server] /delete - Processing blob: ${blob.name} metadata=`,
+    //   props.metadata
+    // );
+            const docId = blob.metadata?.documentid;
+            if(docId) docIds.add(docId);
+
+            // if(!docId) {
+            //   console.warn(`[Server] /delete - No documentId found in metadata for blob "${blob.name}". Skipping Pinecone deletion.`);
+            // }
 
           await client.deleteBlob(blob.name);
           deletedCount++;
           console.log(`[Server] /delete - Deleted blob within directory: ${blob.name}`);
 
-          if(docId){
-            await deleteByPrefix(`${docId}-`, 'Chunky');
-            console.log(`[Server] /delete - Deleted embeddings for document ID: ${docId}`);
-          }
+        //   if(docId){
+        //     await deleteByPrefix(`${docId}-`, 'Chunky');
+        //     console.log(`[Server] /delete - Deleted embeddings for document ID: ${docId}`);
+        //   }
         } catch (delError) {
            console.warn(`[Server] /delete - Failed to delete blob ${blob.name} within directory:`, delError.message);
            // Decide if this should halt the process or just log
         }
       }
       console.log(`[Server] /delete - Deleted ${deletedCount} blobs within "${prefix}".`);
+
+      for (const id of docIds) {
+        try {
+            await deleteByPrefix(`${id}#`, 'Chunky');
+            console.log(`[Server] /delete - Deleted Pinecone vectors for documentId=${id}`);
+        } catch (pineErr) {
+            console.warn(`[Server] /delete - Pinecone deletion failed for ${id}:`, pineErr.message);
+        }
+    }
 
 
       // --- Attempt to delete the metadata.json within the directory ---
@@ -725,8 +774,6 @@ export const deleteItem = async (req, res) => {
       // Delete single blob (use original itemPath here as it was confirmed to be a file)
       const blobClientForFile = client.getBlockBlobClient(itemPath);
       const deleteResponse = await blobClientForFile.deleteIfExists();
-      const props     = await blobClientForFile.getProperties();
-      const docId     = props.metadata?.documentid;
       if (!deleteResponse.errorCode) {
         console.log(`[Server] /delete - Blob deleted: "${itemPath}"`);
 
@@ -741,10 +788,15 @@ export const deleteItem = async (req, res) => {
         }
         // --- End Update ---
 
-        if (docId) {
-            await deleteByPrefix(`${docId}-`, 'Chunky');
-            console.log(`[Server] /delete - Deleted Pinecone vectors for documentId=${docId}`);
-        }
+        // if(!docId) {
+        //     console.warn(`[Server] /delete - No documentId found in metadata for blob "${itemPath}". Skipping Pinecone deletion.`);
+        // }
+
+
+        // if (docId) {
+        //     await deleteByPrefix(`${docId}-`, 'Chunky');
+        //     console.log(`[Server] /delete - Deleted Pinecone vectors for documentId=${docId}`);
+        // }
 
         res.status(200).json({ message: `Successfully deleted "${itemPath}".` });
       } else {

@@ -130,23 +130,14 @@ import {
         for (const blob of segment.segment.blobItems) {
           if (blob.metadata) {
             // Check all possible metadata keys (case-insensitive)
-            const metadataKeys = Object.keys(blob.metadata).map(k => k.toLowerCase());
-            const metadataValues = Object.values(blob.metadata);
-            
-            const hasDocIdInMetadata = metadataKeys.includes('documentid') || 
-                                       metadataKeys.includes('docid') || 
-                                       metadataKeys.includes('id');
-            
-            const hasDocIdInValues = metadataValues.some(v => 
-              v.toString().toLowerCase() === documentId.toLowerCase()
-            );
-            
-            if (hasDocIdInMetadata || hasDocIdInValues) {
-              console.log(`✓ Found blob with matching metadata: ${blob.name}`);
-              console.log(`Metadata: ${JSON.stringify(blob.metadata)}`);
-              foundBlob = blob.name;
-              break;
-            }
+          const md = blob.metadata || {};
+        // only match if the metadata.documentid *value* equals your ID
+        if (md.documentid && md.documentid.toLowerCase() === documentId.toLowerCase()) {
+           console.log(`✓ Found blob with matching metadata: ${blob.name}`);
+           console.log(`Metadata: ${JSON.stringify(blob.metadata)}`);
+           foundBlob = blob.name;
+           break;
+         }
           }
         }
         

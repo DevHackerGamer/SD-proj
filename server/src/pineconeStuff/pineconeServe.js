@@ -110,7 +110,7 @@ export async function embedAndStore(text, fileName) {
     const features = await extractFeatures(text);
     
     const vectorEntry = {
-      id: `${fileName}-${Date.now()}`, // unique ID for the vector
+      id: `${fileName}#${Date.now()}`, // unique ID for the vector
       values: features, // the feature vector
       metadata: {
         text: text,
@@ -858,31 +858,32 @@ export function sortAndFilterByRelevance(docs, threshold = 0.6) {
  * Uses listPaginated + deleteMany (serverless indexes only).
  */
 export async function deleteByPrefix(prefix, namespace = 'Chunky') {
-  if (!pineconeInitialized || !index) {
-    console.warn('[Pinecone] Not initialized, skipping deleteByPrefix');
-    return { deletedCount: 0 };
-  }
+  console.log('[Pinecone] deleteByPrefix args →', { prefix, namespace });
+  const ns = pc.index(PINECONE_INDEX_NAME, PINECONE_INDEX_HOST).namespace(namespace);
 
-  const ns = index.namespace(namespace);
-  let cursor = undefined;
+  let paginationToken = undefined;
   const allIds = [];
-
-  // page through all IDs that start with prefix
   do {
-    const page = await ns.listPaginated({ prefix, limit: 100, cursor });
-    allIds.push(...page.ids);
-    cursor = page.nextPageToken;
-  } while (cursor);
+    console.log('[Pinecone] listPaginated args →', { prefix, limit: 100, paginationToken });
+    const page = await ns.listPaginated({ prefix, limit: 100, paginationToken });
+    console.log('[Pinecone] listPaginated result →', page);
+    const pageIds = (page.vectors||[]).map(v => v.id);
+    allIds.push(...pageIds);
+    paginationToken = page.pagination?.next;
+  } while (paginationToken);
+
+  console.log('[Pinecone] Collected IDs →', allIds);
 
   if (allIds.length === 0) {
     console.log(`[Pinecone] No vectors found with prefix "${prefix}"`);
     return { deletedCount: 0 };
   }
 
-  // batch‐delete them
+  // Batch delete them
   await ns.deleteMany(allIds);
   console.log(`[Pinecone] Deleted ${allIds.length} vectors with prefix "${prefix}"`);
   return { deletedCount: allIds.length };
 }
+
 
 

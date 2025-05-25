@@ -385,49 +385,42 @@ router.post('/ask', async (req, res) => {
       : isSpecificDocRequest 
         ? enhancedDocs.filter((_, index) => index === requestedDocIndex)
         : limitToRelevantSources(enhancedDocs, question, metadataFilters);
-    
-    // Fix document links and generate SAS URLs
-    const processedSources = await Promise.all(enhancedDocs.map(async (doc, index) => {
-      let docID = doc.link;
-      let sasUrl = null;
-      
-      // Skip if no link
-      if (!docID) {
-        return {
-          // Safely handle doc.text that might not be a string
-          text: getTextPreview(doc.text),
-          link: null,
-          sasUrl: null,
-          documentNumber: index + 1
-        };
-      }
-      
-      // Fix the document path to remove localhost if present
-      const fixedDocPath = fixDocumentPath(docID);
-      console.log(`[RAG] Original doc path: ${docID}`);
-      console.log(`[RAG] Fixed doc path: ${fixedDocPath}`);
-      
-      // Generate SAS URL for the document
-      try {
-        sasUrl = await generateSasTokenForDocument(fixedDocPath);
-        
-        if (!sasUrl) {
-          console.log(`[RAG] Could not generate SAS URL for ${fixedDocPath}, trying original path`);
-          sasUrl = await generateSasTokenForDocument(docID);
-        }
-      } catch (error) {
-        console.error(`[RAG] Error generating SAS URL:`, error.message);
-      }
-      
+    // Debug: see how many docs survived filtering
+console.log(`[RAG] filteredDocs length: ${filteredDocs.length}`);
+
+// If no docs survived, fall back to enhancedDocs so you always get at least the original sources
+const docsToProcess = filteredDocs.length > 0 ? filteredDocs : enhancedDocs;
+
+const processedSources = await Promise.all(
+  docsToProcess.map(async (doc, index) => {
+    const docPath = doc.link;
+    let sasUrl = null;
+
+    if (!docPath) {
       return {
-        // Safely handle doc.text that might not be a string
         text: getTextPreview(doc.text),
-        link: sasUrl,
-        originalLink: sasUrl,
-        sasUrl: sasUrl,
+        link: null,
+        sasUrl: null,
         documentNumber: index + 1
       };
-    }));
+    }
+
+    // Normalize path and generate SAS
+    const fixedDocPath = fixDocumentPath(docPath);
+    try {
+      sasUrl = await generateSasTokenForDocument(fixedDocPath);
+    } catch (e) {
+      console.error("[RAG] SAS error:", e.message);
+    }
+
+    return {
+      text: getTextPreview(doc.text),
+      link: sasUrl,
+      sasUrl: sasUrl,
+      documentNumber: index + 1
+    };
+  })
+);
     
     console.log(`[RAG] Sending response back to user`);
     
