@@ -12,7 +12,7 @@ interface UploadSectionProps {
 
 const UploadSection: React.FC<UploadSectionProps> = ({ isLoading, uploading, onFileUpload, fileInputRef }) => {
   return (
-    <div className={styles.uploadSection}>
+    <section className={styles.uploadSection}>
       <input
         type="file"
         id="file-upload"
@@ -28,7 +28,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ isLoading, uploading, onF
         disabled={isLoading || uploading}
       />
       {uploading && <span>Uploading...</span>}
-    </div>
+    </section>
   );
 };
 

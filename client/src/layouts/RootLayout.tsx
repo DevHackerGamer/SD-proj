@@ -2,6 +2,9 @@ import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton, UserButton, useAuth } from '@clerk/clerk-react';
 import { SlArrowLeftCircle,SlArrowRightCircle   } from "react-icons/sl";
+// At the top of your file
+import logo from './logo.png'; // Adjust if your path differs
+
 
 
 const RootLayout = () => {
@@ -27,13 +30,16 @@ const RootLayout = () => {
       {/* Header */}
       <header className="bg-gray-900 shadow-md border-b-2 border-gray-700">
         <section className="container mx-auto flex justify-between items-center px-4 py-3">
-          
-          {/* Left side - Archive Title */}
-          <h1 className="text-xl font-bold">
-            <Link to="/" className="text-white hover:text-blue-400">
-              Archive
-            </Link>
-          </h1>
+
+{/* Left side - Logo and Archive Title */}
+<h1 className="text-2xl font-bold font-title">
+  <Link to="/" className="flex items-center text-white hover:text-blue-400 gap-3">
+    <img src={logo} alt="Logo" className="h-14 w-auto logo-glow" />
+    Archive
+  </Link>
+</h1>
+
+
           
           {/* Right side - goAdmin/goHome + Profile Icon */}
           <nav className="flex items-center gap-6">

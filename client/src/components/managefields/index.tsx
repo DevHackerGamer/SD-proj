@@ -16,7 +16,7 @@ const ManageFieldsComponent: React.FC<ManageFieldsComponentProps> = ({ onFieldsS
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 600);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -26,10 +26,10 @@ const ManageFieldsComponent: React.FC<ManageFieldsComponentProps> = ({ onFieldsS
       // Here you would call your API to save the data
       // For now we're just using the local data
       console.log('Saving metadata options:', metadataOptions);
-      
+
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       // Call the parent callback
       onFieldsSaved();
     } catch (err) {
@@ -40,26 +40,26 @@ const ManageFieldsComponent: React.FC<ManageFieldsComponentProps> = ({ onFieldsS
 
   if (isLoading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
+      <section className="loading-container" aria-live="polite" aria-busy="true"> {/* Use section for semantic grouping */}
+        <div className="loading-spinner"></div> {/* This div is fine for the spinner animation */}
         <p>Loading metadata fields...</p>
-      </div>
+      </section>
     );
   }
 
   if (error) {
     return (
-      <div className="error-container">
-        <div className="error-icon">⚠️</div>
+      <section className="error-container" role="alert"> {/* Use section with role="alert" for errors */}
+        <p className="error-icon">⚠️</p> {/* Changed div to p, suitable for a single icon/character */}
         <p>{error}</p>
         <button onClick={() => setError(null)}>Retry</button>
-      </div>
+      </section>
     );
   }
 
   return (
-    <EnhancedFieldsUI 
-      metadataOptions={metadataOptions} 
+    <EnhancedFieldsUI
+      metadataOptions={metadataOptions}
       onFieldsSaved={handleFieldsSaved}
     />
   );
